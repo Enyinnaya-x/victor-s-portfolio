@@ -65,7 +65,7 @@
         <div class="card-img-overlay d-flex flex-column justify-content-end align-items-start">
             <h4 class="card-title fw-bolder fs-3">Hi, I'm Victor</h4>
             <p class="card-text" id="typed-text"></p>
-            <a href="Victor_Eke_Resume_real.pdf" download="Victor'sResume.pdf" class="btn btn-primary btn-sm">Download resume</a>
+            <a href="Official_CV.pdf" download="Victor'sResume.pdf" class="btn btn-primary btn-sm">Download resume</a>
         </div>
     </div>
     <div class="container d-block d-md-none mt-5">
@@ -74,7 +74,7 @@
             <div class="card-body">
                 <h4 class="card-title">Hi, I'm Victor</h4>
                 <p class="card-text" id="typed-text">Full-Stack Developer</p>
-                <a href="Victor_Eke_Resume_real.pdf" download="Victor'sResume.pdf" class="btn btn-primary btn-sm" id="triggerdown">Download Resume</a>
+                <a href="Official_CV.pdf" download="Victor'sResume.pdf" class="btn btn-primary btn-sm" id="triggerdown">Download Resume</a>
             </div>
         </div>
     </div>
@@ -142,7 +142,7 @@
         <h1>Connect with me...</h1>
         <div class="socials my-5  d-flex flex-md-row justify-content-around gap-5">
            <a href="https://github.com/Enyinnaya-x" class=""><i class="bi bi-github active" id="mygit"></i></a>
-           <a href="mailto:ekevictor84@gmail.com" class="text-white"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
+           <a href="mailto:ekevictor84@gmail.com" class="active" id="myMail"><svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor"
             stroke-width="2" stroke-linecap="round" stroke-linejoin="round" class="lucide lucide-mail-icon lucide-mail">
             <path d="m22 7-8.991 5.727a2 2 0 0 1-2.009 0L2 7" />
             <rect x="2" y="4" width="20" height="16" rx="2" />
@@ -166,24 +166,6 @@
         });
     </script>
     <script src="https://cdn.jsdelivr.net/npm/@emailjs/browser@4/dist/email.min.js"></script>
-    <script type="text/javascript">
-            emailjs.init('jsmGrDo0tdNxBo0Tb');
-
-        document.getElementById('contact-form').addEventListener('submit', function (event) {
-                event.preventDefault();
-
-                emailjs.sendForm('service_hq1w0ce', 'template_qzfbwe8', this)
-                    .then(function () {
-                        alert('Email sent successfully!');
-                    }, function (error) {
-                        alert('Failed to send email: ' + JSON.stringify(error));
-                    });
-
-             document.getElementById("name").value = "" ;      
-             document.getElementById("email").value = "" ;      
-             document.getElementById("mssg").value = "" ;      
-            });
-    </script>
     <script>
      document.addEventListener('DOMContentLoaded', function () {
             const themeIcon = document.getElementById('lightmode');
@@ -198,6 +180,7 @@
                 themeIcon.classList.toggle('bi-sun');
                 themeIcon.classList.toggle('bi-moon-fill');
                 document.getElementById("mygit").classList.toggle("active");
+                document.getElementById("myMail").classList.toggle("active");
                 document.querySelector("navbar").style.background = "white";
 
             });
