@@ -3,30 +3,25 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <meta name="description" content="Victor Eke - Backend Engineer & Software Developer. Building scalable, robust systems with Spring Boot, Laravel, Java, PHP, PostgreSQL, MySQL. Specializing in backend architecture, microservices, and RESTful APIs.">
-    <meta name="keywords" content="backend engineer, backend developer, software engineer, software developer, Victor Eke, Eke Victor, Enyinnaya Eke, Java developer, Spring Boot, Laravel, PHP, PostgreSQL, MySQL, web developer, app developer, system architecture, microservices, RESTful API, scalable systems">
+    <meta name="description" content="Victor Eke — backend engineer. Node.js and TypeScript, with Spring Boot/Java and Laravel/PHP in the toolkit. Systems, not features.">
+    <meta name="keywords" content="Victor Eke, backend engineer, Node.js, TypeScript, Spring Boot, Java, Laravel, PHP, PostgreSQL, MySQL, system architecture">
     <meta name="author" content="Victor Eke">
     <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
     <meta name="language" content="English">
-    <meta name="revisit-after" content="7 days">
-    
-    <!-- Open Graph Meta Tags -->
+
     <meta property="og:type" content="website">
-    <meta property="og:site_name" content="Victor Eke - Backend Engineer">
-    <meta property="og:title" content="Victor Eke - Backend Software Engineer | System Architecture Specialist">
-    <meta property="og:description" content="Backend engineer building scalable, robust systems. Expertise in Spring Boot, Laravel, Java, PHP, PostgreSQL, MySQL. Specializing in microservices and system design.">
+    <meta property="og:site_name" content="Victor Eke">
+    <meta property="og:title" content="Victor Eke — Backend Engineer">
+    <meta property="og:description" content="Node.js and TypeScript, with Spring Boot/Java and Laravel/PHP in the toolkit. Systems, not features.">
     <meta property="og:url" content="https://www.enyinnaya.xyz/">
-    
-    <!-- Twitter Card Meta Tags -->
+
     <meta name="twitter:card" content="summary_large_image">
-    <meta name="twitter:title" content="Victor Eke - Backend Software Engineer">
-    <meta name="twitter:description" content="Backend engineer specializing in scalable system architecture. Spring Boot, Laravel, Java, PHP, PostgreSQL, MySQL expert.">
-    <meta name="twitter:creator" content="@victoreke">
-    
-    <!-- Canonical URL -->
+    <meta name="twitter:title" content="Victor Eke — Backend Engineer">
+    <meta name="twitter:description" content="Node.js and TypeScript, with Spring Boot/Java and Laravel/PHP in the toolkit.">
+    <meta name="twitter:creator" content="@EnyitheDev">
+
     <link rel="canonical" href="https://www.enyinnaya.xyz/">
-    
-    <!-- Schema.org Structured Data -->
+
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -38,378 +33,305 @@
       "email": "ekevictor84@gmail.com",
       "telephone": "+2349155958597",
       "sameAs": [
-        "https://github.com/victoreke",
+        "https://github.com/Enyinnaya-x",
         "https://www.linkedin.com/in/victor-eke-133288359/",
-        "https://twitter.com"
+        "https://x.com/EnyitheDev"
       ],
-      "knowsAbout": [
-        "Backend Engineering",
-        "Software Engineering",
-        "System Architecture",
-        "Spring Boot",
-        "Java",
-        "Laravel",
-        "PHP",
-        "MySQL",
-        "PostgreSQL",
-        "Microservices",
-        "RESTful APIs",
-        "Distributed Systems",
-        "Database Design",
-        "Clean Code"
-      ],
-      "description": "Backend engineer specializing in building scalable, robust systems. Expert in Spring Boot, Laravel and Express.js .Focuses on clean architecture and performance optimization."
+      "knowsAbout": ["Backend Engineering", "System Architecture", "Node.js", "TypeScript", "Spring Boot", "Java", "Laravel", "PHP", "PostgreSQL", "MySQL"]
     }
     </script>
-    
-    <title>Victor Eke - Backend Engineer | Software Developer | System Architecture</title>
+
+    <title>Victor Eke — Backend Engineer</title>
     <script src="https://cdn.tailwindcss.com"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100;200;300;400;500;600;700;800;900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
     <style>
-        * {
-            font-family: 'Inter', system-ui, -apple-system, sans-serif;
+        :root {
+            --ink: #0a0a0a;
+            --paper: #fafaf9;
+            --muted: #6b6b68;
+            --hair: #e2e1de;
+            --hair-strong: #0a0a0a;
         }
+
+        * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
 
         body {
-            background: linear-gradient(135deg, #ffffff 0%, #f8f8f8 100%);
-            min-height: 100vh;
+            background: var(--paper);
+            color: var(--ink);
         }
 
-        /* Smooth animations */
-        @keyframes fadeInUp {
-            from {
-                opacity: 0;
-                transform: translateY(20px);
+        @media (prefers-reduced-motion: no-preference) {
+            @keyframes fadeInUp {
+                from { opacity: 0; transform: translateY(14px); }
+                to { opacity: 1; transform: translateY(0); }
             }
-            to {
-                opacity: 1;
-                transform: translateY(0);
-            }
+            .animate-in { animation: fadeInUp 0.5s ease-out both; }
         }
-
-        @keyframes slideInRight {
-            from {
-                opacity: 0;
-                transform: translateX(-20px);
-            }
-            to {
-                opacity: 1;
-                transform: translateX(0);
-            }
-        }
-
-        @keyframes subtle-pulse {
-            0%, 100% {
-                opacity: 1;
-            }
-            50% {
-                opacity: 0.8;
-            }
-        }
-
-        .animate-in {
-            animation: fadeInUp 0.6s ease-out forwards;
-        }
-
-        .animate-slide {
-            animation: slideInRight 0.8s ease-out forwards;
-        }
-
-        .hover-lift {
-            transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
-        }
-
-        .hover-lift:hover {
-            transform: translateY(-4px);
+        @media (prefers-reduced-motion: reduce) {
+            .animate-in { opacity: 1; }
         }
 
         .nav-link {
             position: relative;
-            transition: color 0.3s ease;
+            transition: color 0.2s ease;
         }
-
         .nav-link::after {
             content: '';
             position: absolute;
-            bottom: -2px;
+            bottom: -3px;
             left: 0;
             width: 0;
             height: 1px;
-            background: #000;
-            transition: width 0.3s ease;
+            background: var(--ink);
+            transition: width 0.25s ease;
         }
+        .nav-link:hover::after { width: 100%; }
 
-        .nav-link:hover::after {
-            width: 100%;
-        }
+        .hairline { border-color: var(--hair); }
 
-        .tech-tag {
-            display: inline-block;
-            padding: 0.5rem 1.25rem;
-            border: 1px solid #e5e5e5;
-            border-radius: 9999px;
-            font-size: 0.875rem;
+        .cta {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.75rem;
+            background: var(--ink);
+            color: var(--paper);
+            border-radius: 2px;
+            text-decoration: none;
             font-weight: 500;
-            transition: all 0.3s ease;
-            margin: 0.5rem 0.5rem 0.5rem 0;
+            font-size: 0.95rem;
+            transition: transform 0.2s ease, background 0.2s ease;
+            border: 1px solid var(--ink);
         }
+        .cta:hover { transform: translateY(-2px); background: #262624; }
 
-        .tech-tag:hover {
-            border-color: #000;
-            background: #f5f5f5;
+        .cta-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.75rem;
+            border: 1px solid var(--ink);
+            color: var(--ink);
+            border-radius: 2px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
         }
+        .cta-ghost:hover { transform: translateY(-2px); background: var(--ink); color: var(--paper); }
 
         .social-icon {
             display: inline-flex;
             align-items: center;
             justify-content: center;
-            width: 48px;
-            height: 48px;
-            border: 2px solid #000;
-            border-radius: 50%;
-            color: #000;
-            transition: all 0.3s ease;
-            margin: 0 0.5rem;
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--ink);
+            border-radius: 2px;
+            color: var(--ink);
+            transition: all 0.2s ease;
         }
+        .social-icon:hover { background: var(--ink); color: var(--paper); transform: translateY(-3px); }
 
-        .social-icon:hover {
-            background: #000;
-            color: #fff;
-            transform: translateY(-4px);
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.02em;
+            color: var(--muted);
         }
-
-        .cta-primary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 2rem;
-            background: #000;
-            color: #fff;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .cta-primary:hover {
-            background: #333;
-            transform: translateY(-2px);
-        }
-
-        .cta-secondary {
-            display: inline-flex;
-            align-items: center;
-            gap: 0.5rem;
-            padding: 0.75rem 2rem;
-            border: 2px solid #000;
-            color: #000;
-            border-radius: 8px;
-            text-decoration: none;
-            font-weight: 600;
-            transition: all 0.3s ease;
-        }
-
-        .cta-secondary:hover {
-            background: #000;
-            color: #fff;
-            transform: translateY(-2px);
-        }
-
-        .divider {
-            height: 1px;
-            background: linear-gradient(90deg, transparent, #e5e5e5, transparent);
-        }
+        .eyebrow::before { content: '// '; color: #b8b7b3; }
 
         .section-title {
-            position: relative;
-            display: inline-block;
-            font-size: 2.5rem;
+            font-family: 'Space Grotesk', sans-serif;
             font-weight: 700;
-            margin-bottom: 1rem;
+            font-size: 2.25rem;
+            letter-spacing: -0.01em;
         }
 
-        .section-title::after {
-            content: '';
-            position: absolute;
-            bottom: -8px;
-            left: 0;
-            width: 60px;
-            height: 3px;
-            background: #000;
+        /* Stack manifest — signature element */
+        .manifest {
+            border: 1px solid var(--hair-strong);
+            border-radius: 2px;
+            background: #ffffff;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.875rem;
+            overflow: hidden;
+        }
+        .manifest-head {
+            padding: 0.85rem 1.25rem;
+            border-bottom: 1px solid var(--hair);
+            color: var(--muted);
+            font-size: 0.75rem;
+            letter-spacing: 0.05em;
+        }
+        .manifest-row {
+            display: grid;
+            grid-template-columns: 130px 1fr;
+            gap: 1rem;
+            padding: 0.9rem 1.25rem;
+            border-bottom: 1px solid var(--hair);
+        }
+        .manifest-row:last-child { border-bottom: none; }
+        .manifest-key { color: var(--muted); }
+        .manifest-val { color: var(--ink); }
+
+        ::selection { background: var(--ink); color: var(--paper); }
+        a:focus-visible, button:focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 3px;
         }
     </style>
 </head>
 <body class="antialiased">
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-white/80 border-b border-gray-200">
-        <div class="max-w-6xl mx-auto px-6 py-4 flex justify-between items-center">
-            <a href="#home" class="text-xl font-bold tracking-tight">
-                Victor<span class="text-gray-400">.</span>
+    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fafaf9]/85 border-b hairline">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="#home" class="font-display text-lg font-700 tracking-tight">
+                Victor Eke
             </a>
             <div class="hidden md:flex gap-8">
-                <a href="#about" class="nav-link text-sm font-medium text-gray-700">About</a>
-                <a href="#stack" class="nav-link text-sm font-medium text-gray-700">Stack</a>
-                <a href="#contact" class="nav-link text-sm font-medium text-gray-700">Contact</a>
+                <a href="#about" class="nav-link text-sm font-medium">About</a>
+                <a href="#stack" class="nav-link text-sm font-medium">Stack</a>
+                <a href="#contact" class="nav-link text-sm font-medium">Contact</a>
             </div>
         </div>
     </nav>
 
-    <!-- Hero Section -->
-    <section id="home" class="pt-32 pb-20 px-6 text-center">
+    <!-- Hero -->
+    <section id="home" class="pt-40 pb-24 px-6">
         <div class="max-w-3xl mx-auto">
-            <div class="animate-in" style="animation-delay: 0s">
-                <p class="text-sm font-semibold text-gray-600 mb-4 tracking-wide uppercase">Backend Engineer & Software Developer</p>
-                <h1 class="text-6xl md:text-7xl font-800 mb-6 leading-tight tracking-tight">
-                    Building Scalable Systems
+            <div class="animate-in">
+                <p class="eyebrow mb-5">whoami</p>
+                <h1 class="font-display text-5xl md:text-6xl font-700 mb-8 leading-[1.08] tracking-tight">
+                    I build systems, not features.
                 </h1>
             </div>
-            
-            <div class="animate-in" style="animation-delay: 0.1s">
-                <p class="text-xl text-gray-600 mb-12 leading-relaxed max-w-2xl mx-auto">
-                    I'm Victor Eke, a backend engineer and software engineer specializing in architecting robust, scalable backend systems. Expert in <strong>Spring Boot</strong>, <strong>Java</strong>, <strong>Laravel</strong>, <strong>PHP</strong>, <strong>PostgreSQL</strong>, and <strong>MySQL</strong>. Building microservices, RESTful APIs, and distributed systems that power real applications.
+
+            <div class="animate-in" style="animation-delay: 0.08s">
+                <p class="text-lg text-[#3a3a38] mb-12 leading-relaxed max-w-xl">
+                    Backend engineer. Most of my work runs on <strong>Node.js</strong> and <strong>TypeScript</strong> these days.
+                    <strong>Spring Boot / Java</strong> and <strong>Laravel / PHP</strong> are still part of how I reason
+                    about a problem before I pick a stack. Based in Nigeria.
                 </p>
             </div>
 
-            <div class="animate-in flex flex-col sm:flex-row gap-4 justify-center" style="animation-delay: 0.2s">
-                <a href="Backend_Developer_Victor_Eke.pdf" download class="cta-primary">
-                    <i class="fas fa-download text-sm"></i>
-                    Download Resume
-                </a>
-                <a href="#contact" class="cta-secondary">
-                    Get in Touch
-                </a>
+            <div class="animate-in flex flex-col sm:flex-row gap-4" style="animation-delay: 0.16s">
+                <a href="#contact" class="cta">Get in touch</a>
+                <a href="#stack" class="cta-ghost">See the stack</a>
             </div>
         </div>
     </section>
 
-    <!-- About Section -->
+    <!-- About -->
     <section id="about" class="py-20 px-6">
-        <div class="max-w-6xl mx-auto">
-            <div class="mb-16">
-                <h2 class="section-title">About Me</h2>
-                <p class="text-gray-600 mt-4">Professional Backend Engineer & Software Developer</p>
-            </div>
-            
-            <div class="grid md:grid-cols-2 gap-16 items-center">
-                <div class="animate-in">
-                    <h3 class="text-2xl font-bold text-black mb-4">Backend Engineering Excellence</h3>
-                    
-                    <p class="text-lg text-gray-700 mb-6 leading-relaxed">
-                        I'm Victor Eke, a backend engineer and software developer passionate about building <span class="font-semibold">scalable, robust systems</span>. As a software engineer specializing in backend development, I focus on clean code, system architecture, and solving real problems with elegant solutions.
-                    </p>
-                    
-                    <p class="text-lg text-gray-700 mb-6 leading-relaxed">
-                        My expertise spans <strong>Spring Boot and Java</strong> for enterprise systems, <strong>Laravel & Express.js (Typescript)</strong> for rapid backend development, and advanced database management with <strong>PostgreSQL and MySQL</strong>. I specialize in microservices architecture, RESTful API design, and distributed systems.
-                    </p>
+        <div class="max-w-3xl mx-auto">
+            <p class="eyebrow mb-3">about</p>
+            <h2 class="section-title mb-10">How I think about the work</h2>
 
-                    <p class="text-base text-gray-600 leading-relaxed">
-                        When I'm not architecting backend solutions, you'll find me collaborating with fellow developers, exploring emerging technologies, or sharing insights on Twitter. Always learning, always improving my craft.
-                    </p>
-                </div>
-
-                <div class="animate-in">
-                    <div class="relative">
-                        <div class="absolute -inset-1 bg-gradient-to-r from-gray-100 to-gray-50 rounded-xl blur opacity-75"></div>
-                        <div class="relative bg-white rounded-xl p-8 border border-gray-200">
-                            <img src="images/codepicture.jfif" alt="Victor Eke - Backend Engineer and Software Developer" class="rounded-lg w-full mb-6">
-                            <div class="space-y-3">
-                                <p class="text-sm text-gray-600"><span class="font-semibold">Focus:</span> Backend Architecture & System Design</p>
-                                <p class="text-sm text-gray-600"><span class="font-semibold">Specialization:</span> Spring Boot, Laravel, Distributed Systems</p>
-                                <p class="text-sm text-gray-600"><span class="font-semibold">Location:</span> Nigeria 🇳🇬</p>
-                                <p class="text-sm text-gray-600"><span class="font-semibold">Expertise:</span> Java, Node.js, PHP, PostgreSQL, MySQL, Microservices</p>
-                            </div>
-                        </div>
-                    </div>
-                </div>
+            <div class="space-y-6 text-lg text-[#3a3a38] leading-relaxed">
+                <p>
+                    I care about architecture — how a system is put together, why it holds up under load,
+                    and what breaks first when it doesn't. That's a more interesting problem to me than any
+                    single framework.
+                </p>
+                <p>
+                    I've spent the most time recently in Node.js and TypeScript, but I came up through
+                    Spring Boot and Java, and Laravel and PHP, and those still shape how I model data,
+                    write migrations, and think about concurrency. PostgreSQL and MySQL both show up
+                    depending on what the problem needs.
+                </p>
+                <p class="text-[#0a0a0a] font-medium">
+                    I'm not looking to sound impressive. I'm trying to get better at reasoning about state,
+                    correctness, and failure — and building things that are still readable a year later.
+                </p>
             </div>
         </div>
     </section>
 
-    <div class="divider my-20"></div>
+    <div class="max-w-5xl mx-auto px-6"><div class="border-t hairline"></div></div>
 
-    <!-- Tech Stack Section -->
+    <!-- Stack -->
     <section id="stack" class="py-20 px-6">
-        <div class="max-w-6xl mx-auto">
-            <div class="mb-12 animate-in">
-                <h2 class="section-title">Backend Tech Stack</h2>
-                <p class="text-gray-600 mt-4">Technologies I specialize in for building scalable backend systems</p>
-            </div>
+        <div class="max-w-3xl mx-auto">
+            <p class="eyebrow mb-3">stack</p>
+            <h2 class="section-title mb-10">What I actually reach for</h2>
 
-            <div class="animate-in">
-                <div class="flex flex-wrap gap-3">
-                    <span class="tech-tag" title="Enterprise Java Framework">Spring Boot</span>
-                    <span class="tech-tag" title="Object-Oriented Programming">Java</span>
-                    <span class="tech-tag" title="Enterprise Node.js Framework">Express.js</span>
-                    <span class="tech-tag" title="Programming Language">Typescript</span>
-                    <span class="tech-tag" title="PHP Web Framework">Laravel</span>
-                    <span class="tech-tag" title="Server-Side Language">PHP</span>
-                    <span class="tech-tag" title="Relational Database">MySQL</span>
-                    <span class="tech-tag" title="Advanced SQL Database">PostgreSQL</span>
-                    <span class="tech-tag" title="API Architecture Pattern">RESTful APIs</span>
-                    <span class="tech-tag" title="Service Oriented Architecture">Microservices</span>
-                    <span class="tech-tag" title="Containerization">Docker</span>
-                    <span class="tech-tag" title="Version Control">Git</span>
-                    <span class="tech-tag" title="Software Development">Backend Development</span>
-                    <span class="tech-tag" title="System Design">System Architecture</span>
+            <div class="manifest">
+                <div class="manifest-head">stack.config</div>
+                <div class="manifest-row">
+                    <span class="manifest-key">runtime</span>
+                    <span class="manifest-val">Node.js, TypeScript, Express</span>
+                </div>
+                <div class="manifest-row">
+                    <span class="manifest-key">database</span>
+                    <span class="manifest-val">PostgreSQL, MySQL</span>
+                </div>
+                <div class="manifest-row">
+                    <span class="manifest-key">also fluent</span>
+                    <span class="manifest-val">Java / Spring Boot, PHP / Laravel</span>
+                </div>
+                <div class="manifest-row">
+                    <span class="manifest-key">architecture</span>
+                    <span class="manifest-val">REST APIs, microservices, system design</span>
+                </div>
+                <div class="manifest-row">
+                    <span class="manifest-key">tooling</span>
+                    <span class="manifest-val">Docker, Git, Redis</span>
                 </div>
             </div>
         </div>
     </section>
 
-    <div class="divider my-20"></div>
+    <div class="max-w-5xl mx-auto px-6"><div class="border-t hairline"></div></div>
 
-    <!-- Contact Section -->
-    <section id="contact" class="py-20 px-6">
-        <div class="max-w-4xl mx-auto">
-            <div class="bg-black text-white rounded-2xl p-12 md:p-16 text-center animate-in hover-lift">
-                <h2 class="text-4xl md:text-5xl font-800 mb-6">Let's Build Something Real</h2>
-                <p class="text-xl text-gray-300 mb-6 max-w-2xl mx-auto">
-                    Are you looking for a backend engineer who understands system architecture? I'm Victor Eke, a software developer and backend engineer ready to tackle challenging problems.
-                </p>
-                <p class="text-base text-gray-400 mb-12 max-w-2xl mx-auto">
-                    Whether you need Spring Boot expertise, Laravel development, database optimization with PostgreSQL or MySQL, or microservices architecture, I'm interested in projects that solve real problems.
-                </p>
+    <!-- Contact -->
+    <section id="contact" class="py-24 px-6">
+        <div class="max-w-3xl mx-auto">
+            <p class="eyebrow mb-3">contact</p>
+            <h2 class="font-display text-4xl md:text-5xl font-700 mb-6 tracking-tight leading-tight">
+                Working on something real?
+            </h2>
+            <p class="text-lg text-[#3a3a38] mb-12 max-w-xl leading-relaxed">
+                If it involves backend architecture, API design, or database work in Node.js,
+                Spring Boot, or Laravel — reach out.
+            </p>
 
-                <div class="flex flex-col sm:flex-row gap-4 justify-center mb-12">
-                    <a href="mailto:ekevictor84@gmail.com" class="bg-white text-black px-8 py-3 rounded-lg font-semibold hover:bg-gray-100 transition-all transform hover:-translate-y-1 inline-flex items-center justify-center gap-2">
-                        <i class="fas fa-envelope text-sm"></i>
-                        Send Email
-                    </a>
-                    <a href="https://wa.me/2349155958597" target="_blank" rel="noopener noreferrer" class="border-2 border-white text-white px-8 py-3 rounded-lg font-semibold hover:bg-white hover:text-black transition-all transform hover:-translate-y-1 inline-flex items-center justify-center gap-2">
-                        <i class="fab fa-whatsapp text-sm"></i>
-                        WhatsApp
-                    </a>
-                </div>
+            <div class="flex flex-col sm:flex-row gap-4 mb-14">
+                <a href="mailto:ekevictor84@gmail.com" class="cta">
+                    <i class="fas fa-envelope text-sm"></i>
+                    Send Email
+                </a>
+                <a href="https://wa.me/2349155958597" target="_blank" rel="noopener noreferrer" class="cta-ghost">
+                    <i class="fab fa-whatsapp text-sm"></i>
+                    WhatsApp
+                </a>
+            </div>
 
-                <div class="mb-8">
-                    <p class="text-sm text-gray-400 mb-4">Connect with me on social media</p>
-                </div>
-
-                <div class="flex justify-center gap-6">
-                    <a href="https://github.com/Enyinnaya-x" target="_blank" rel="noopener noreferrer" class="social-icon" style="border-color: white; color: white;">
-                        <i class="fab fa-github"></i>
-                    </a>
-                    <a href="https://www.linkedin.com/in/victor-eke-133288359/" target="_blank" rel="noopener noreferrer" class="social-icon" style="border-color: white; color: white;">
-                        <i class="fab fa-linkedin"></i>
-                    </a>
-                    <a href="https://x.com/EnyitheDev" target="_blank" rel="noopener noreferrer" class="social-icon" style="border-color: white; color: white;">
-                        <i class="fab fa-twitter"></i>
-                    </a>
-                </div>
+            <div class="flex gap-4">
+                <a href="https://github.com/Enyinnaya-x" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="GitHub">
+                    <i class="fab fa-github"></i>
+                </a>
+                <a href="https://www.linkedin.com/in/victor-eke-133288359/" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="LinkedIn">
+                    <i class="fab fa-linkedin"></i>
+                </a>
+                <a href="https://x.com/EnyitheDev" target="_blank" rel="noopener noreferrer" class="social-icon" aria-label="X (Twitter)">
+                    <i class="fab fa-twitter"></i>
+                </a>
             </div>
         </div>
     </section>
 
     <!-- Footer -->
-    <footer class="py-12 px-6 text-center text-gray-600 text-sm border-t border-gray-200">
-        <div class="max-w-6xl mx-auto">
-            <p class="mb-2">© 2025 Victor Eke - Backend Engineer & Software Developer. All rights reserved.</p>
-            <p class="text-xs text-gray-500">Spring Boot • Java • Express.js • Typescript • Laravel • PHP • PostgreSQL • MySQL • System Architecture</p>
+    <footer class="py-10 px-6 border-t hairline">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <p class="text-sm text-[#6b6b68]">© 2026 Victor Eke</p>
+            <p class="font-mono text-xs text-[#6b6b68]">node · typescript · spring boot · laravel · postgresql</p>
         </div>
     </footer>
 
-    <!-- Additional Schema.org Structured Data for Contact -->
     <script type="application/ld+json">
     {
       "@context": "https://schema.org",
@@ -421,29 +343,7 @@
     }
     </script>
 
-    <!-- Organization Schema -->
-    <script type="application/ld+json">
-    {
-      "@context": "https://schema.org",
-      "@type": "Organization",
-      "name": "Victor Eke",
-      "description": "Backend Engineer and Software Developer specializing in scalable system architecture",
-      "url": "https://www.enyinnaya.xyz/",
-      "sameAs": [
-        "https://github.com/Enyinnaya-x",
-        "https://www.linkedin.com/in/victor-eke-133288359/",
-        "https://x.com/EnyitheDev"
-      ],
-      "contact": {
-        "@type": "ContactPoint",
-        "contactType": "Professional",
-        "email": "ekevictor84@gmail.com"
-      }
-    }
-    </script>
-
     <script>
-        // Smooth scroll for navigation
         document.querySelectorAll('a[href^="#"]').forEach(anchor => {
             anchor.addEventListener('click', function (e) {
                 e.preventDefault();
@@ -452,15 +352,11 @@
                     const headerOffset = 80;
                     const elementPosition = target.getBoundingClientRect().top;
                     const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                    window.scrollTo({
-                        top: offsetPosition,
-                        behavior: 'smooth'
-                    });
+                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
                 }
             });
         });
 
-        // Navbar background on scroll
         const nav = document.querySelector('nav');
         window.addEventListener('scroll', () => {
             if (window.scrollY > 50) {
