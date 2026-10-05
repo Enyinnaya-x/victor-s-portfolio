@@ -1,0 +1,550 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="A technical case study on architecting a scalable multi-seller e-commerce database in PostgreSQL for FujiCommerce — schema design, concurrency control, and solving race conditions in inventory and order writes.">
+    <meta name="keywords" content="PostgreSQL multi-tenant schema, e-commerce database design, race condition PostgreSQL, SELECT FOR UPDATE, backend architecture case study, PHP backend engineer, vanilla PHP developer">
+    <meta name="author" content="Victor Eke">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Victor Eke">
+    <meta property="og:title" content="Architecting a Scalable Multi-Seller E-Commerce Database in PostgreSQL for FujiCommerce">
+    <meta property="og:description" content="Schema design, concurrency control, and solving race conditions in a multi-seller PostgreSQL database.">
+    <meta property="og:url" content="https://www.enyinnaya.xyz/fujicommerce-postgresql-case-study.html">
+    <meta property="og:image" content="https://www.enyinnaya.xyz/images/ND5A2793new.jpg">
+    <meta property="article:published_time" content="2026-01-15">
+    <meta property="article:author" content="Victor Eke">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Architecting a Scalable Multi-Seller E-Commerce Database in PostgreSQL for FujiCommerce">
+    <meta name="twitter:description" content="Schema design, concurrency control, and solving race conditions in a multi-seller PostgreSQL database.">
+    <meta name="twitter:creator" content="@EnyitheDev">
+
+    <link rel="canonical" href="https://www.enyinnaya.xyz/fujicommerce-postgresql-case-study.html">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "Architecting a Scalable Multi-Seller E-Commerce Database in PostgreSQL for FujiCommerce",
+      "description": "Schema design, concurrency control, and solving race conditions in a multi-seller PostgreSQL database.",
+      "datePublished": "2026-01-15",
+      "dateModified": "2026-01-15",
+      "author": {
+        "@type": "Person",
+        "name": "Victor Eke",
+        "url": "https://www.enyinnaya.xyz/"
+      },
+      "publisher": {
+        "@type": "Person",
+        "name": "Victor Eke"
+      },
+      "mainEntityOfPage": "https://www.enyinnaya.xyz/fujicommerce-postgresql-case-study.html",
+      "image": "https://www.enyinnaya.xyz/images/ND5A2793new.jpg",
+      "keywords": "PostgreSQL, multi-tenant schema, e-commerce, concurrency, race conditions, backend architecture"
+    }
+    </script>
+
+    <title>Architecting a Scalable Multi-Seller E-Commerce Database in PostgreSQL for FujiCommerce | Victor Eke</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --ink: #0a0a0a;
+            --paper: #fafaf9;
+            --muted: #6b6b68;
+            --hair: #e2e1de;
+            --hair-strong: #0a0a0a;
+        }
+
+        * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+        }
+
+        .nav-link {
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--ink);
+            transition: width 0.25s ease;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        .hairline { border-color: var(--hair); }
+
+        .cta-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.75rem;
+            border: 1px solid var(--ink);
+            color: var(--ink);
+            border-radius: 2px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .cta-ghost:hover { transform: translateY(-2px); background: var(--ink); color: var(--paper); }
+
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.02em;
+            color: var(--muted);
+        }
+        .eyebrow::before { content: '// '; color: #b8b7b3; }
+
+        .article-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border: 1px solid var(--hair);
+            border-radius: 2px;
+            padding: 0.2rem 0.55rem;
+        }
+
+        .prose-article h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.85rem;
+            letter-spacing: -0.01em;
+            margin-top: 3rem;
+            margin-bottom: 1.25rem;
+        }
+        .prose-article h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 0.9rem;
+        }
+        .prose-article p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #3a3a38;
+            margin-bottom: 1.25rem;
+        }
+        .prose-article ul, .prose-article ol {
+            margin: 1rem 0 1.5rem 1.25rem;
+            color: #3a3a38;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        .prose-article ul { list-style: disc; }
+        .prose-article ol { list-style: decimal; }
+        .prose-article li { margin-bottom: 0.4rem; }
+        .prose-article strong { color: var(--ink); }
+        .prose-article code.inline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            background: #efefec;
+            border: 1px solid var(--hair);
+            border-radius: 3px;
+            padding: 0.1rem 0.4rem;
+        }
+
+        /* Code block — signature styling to match the manifest aesthetic */
+        .code-block {
+            border: 1px solid var(--hair-strong);
+            border-radius: 2px;
+            background: #0f0f0e;
+            overflow: hidden;
+            margin: 1.75rem 0;
+        }
+        .code-block-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1.1rem;
+            background: #181816;
+            border-bottom: 1px solid #2a2a27;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #9a9a96;
+        }
+        .code-block pre {
+            margin: 0;
+            padding: 1.25rem 1.5rem;
+            overflow-x: auto;
+        }
+        .code-block code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            color: #e8e8e4;
+            white-space: pre;
+        }
+        .tok-kw { color: #ff7ab2; }
+        .tok-str { color: #a8e6a1; }
+        .tok-com { color: #6b6b68; }
+        .tok-fn { color: #82c3ff; }
+        .tok-num { color: #f5c97a; }
+
+        blockquote {
+            border-left: 3px solid var(--ink);
+            padding: 0.25rem 0 0.25rem 1.5rem;
+            margin: 1.75rem 0;
+            font-style: italic;
+            color: #3a3a38;
+        }
+
+        ::selection { background: var(--ink); color: var(--paper); }
+        a:focus-visible, button:focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 3px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fafaf9]/85 border-b hairline">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="font-display text-lg font-700 tracking-tight">
+                Victor Eke
+            </a>
+            <div class="hidden md:flex gap-8">
+                <a href="index.html#about" class="nav-link text-sm font-medium">About</a>
+                <a href="index.html#stack" class="nav-link text-sm font-medium">Stack</a>
+                <a href="blog.html" class="nav-link text-sm font-medium">Blog</a>
+                <a href="index.html#contact" class="nav-link text-sm font-medium">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Article header -->
+        <header class="pt-40 pb-12 px-6">
+            <div class="max-w-3xl mx-auto">
+                <a href="blog.html" class="font-mono text-sm text-[#6b6b68] inline-flex items-center gap-2 mb-8 hover:text-[#0a0a0a] transition-colors">
+                    <i class="fas fa-arrow-left text-xs"></i> Back to all posts
+                </a>
+                <div class="flex flex-wrap items-center gap-3 mb-6">
+                    <span class="article-tag">PostgreSQL</span>
+                    <span class="article-tag">System Design</span>
+                    <span class="article-tag">E-Commerce</span>
+                    <time datetime="2026-01-15" class="font-mono text-xs text-[#6b6b68]">Jan 15, 2026</time>
+                </div>
+                <h1 class="font-display text-4xl md:text-5xl font-700 mb-6 leading-[1.1] tracking-tight">
+                    Architecting a Scalable Multi-Seller E-Commerce Database in PostgreSQL for FujiCommerce
+                </h1>
+                <p class="text-lg text-[#3a3a38] leading-relaxed max-w-xl">
+                    A deep dive into the schema design and concurrency control behind FujiCommerce's multi-seller
+                    marketplace — and the exact locking strategy that stopped two customers from buying the same
+                    unit of inventory.
+                </p>
+            </div>
+        </header>
+
+        <div class="max-w-5xl mx-auto px-6"><div class="border-t hairline"></div></div>
+
+        <!-- Article body -->
+        <article class="py-16 px-6">
+            <div class="max-w-3xl mx-auto prose-article">
+
+                <p>
+                    FujiCommerce is a multi-seller digital commerce platform: independent sellers list products,
+                    manage their own inventory, and fulfill orders through a shared storefront and checkout. The
+                    brief was simple to state and hard to deliver — <strong>scalable backend architecture</strong>
+                    that lets hundreds of sellers write to overlapping inventory and order tables at the same time,
+                    without ever selling a unit that doesn't exist.
+                </p>
+                <p>
+                    The application layer is vanilla PHP 8.2 — no framework — talking to the database through PDO.
+                    The database itself started life on MySQL and was migrated to PostgreSQL once the concurrency
+                    requirements around row-level locking and transactional guarantees outgrew what the original
+                    schema could offer. This is the case study on how that database was redesigned in PostgreSQL:
+                    the schema, the concurrency model, and the specific race condition that surfaced in production
+                    load testing before it ever reached a real customer.
+                </p>
+
+                <h2 id="concurrency-challenge">The Concurrency Challenge</h2>
+                <p>
+                    A single-seller store can get away with naive stock checks — read the quantity, check it's
+                    greater than zero, decrement it. In a <strong>high-concurrency</strong> multi-seller environment
+                    that pattern fails constantly. During a flash sale simulation we ran against a staging clone of
+                    FujiCommerce, two checkout requests for the last unit of a limited-stock item both read
+                    <code class="inline">quantity = 1</code> before either request wrote back. Both succeeded. We
+                    oversold.
+                </p>
+                <p>
+                    The challenge wasn't just "prevent overselling." It was preventing overselling
+                    <strong>without</strong> serializing every write to the inventory table, which would have
+                    collapsed throughput the moment checkout traffic scaled past a few hundred concurrent
+                    requests. The database needed to:
+                </p>
+                <ul>
+                    <li>Guarantee that stock decrements are atomic per SKU, even under concurrent checkout attempts.</li>
+                    <li>Isolate sellers from each other's write load — a hot product from Seller A should not lock
+                        rows belonging to Seller B.</li>
+                    <li>Keep order writes and inventory writes consistent, so a failed payment never leaves stock
+                        permanently decremented.</li>
+                </ul>
+
+                <h2 id="schema-design">Database Schema Design</h2>
+                <p>
+                    The schema separates <strong>identity</strong> (who owns what) from <strong>availability</strong>
+                    (what's sellable right now), which is what makes seller-level isolation possible. Simplified,
+                    the core tables look like this:
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-head"><span>schema.sql</span><span>PostgreSQL</span></div>
+                    <pre><code><span class="tok-kw">CREATE TABLE</span> sellers (
+    id              <span class="tok-fn">uuid</span> <span class="tok-kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    business_name   <span class="tok-fn">text</span> <span class="tok-kw">NOT NULL</span>,
+    status          <span class="tok-fn">text</span> <span class="tok-kw">NOT NULL DEFAULT</span> <span class="tok-str">'active'</span>,
+    created_at      <span class="tok-fn">timestamptz</span> <span class="tok-kw">NOT NULL DEFAULT</span> now()
+);
+
+<span class="tok-kw">CREATE TABLE</span> products (
+    id              <span class="tok-fn">uuid</span> <span class="tok-kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    seller_id       <span class="tok-fn">uuid</span> <span class="tok-kw">NOT NULL REFERENCES</span> sellers(id),
+    sku             <span class="tok-fn">text</span> <span class="tok-kw">NOT NULL</span>,
+    title           <span class="tok-fn">text</span> <span class="tok-kw">NOT NULL</span>,
+    price_cents     <span class="tok-fn">integer</span> <span class="tok-kw">NOT NULL CHECK</span> (price_cents >= <span class="tok-num">0</span>),
+    <span class="tok-kw">UNIQUE</span> (seller_id, sku)
+);
+
+<span class="tok-com">-- Inventory is isolated per seller+product, so a hot</span>
+<span class="tok-com">-- row for Seller A never contends with Seller B's rows.</span>
+<span class="tok-kw">CREATE TABLE</span> inventory (
+    product_id      <span class="tok-fn">uuid</span> <span class="tok-kw">PRIMARY KEY REFERENCES</span> products(id),
+    quantity        <span class="tok-fn">integer</span> <span class="tok-kw">NOT NULL CHECK</span> (quantity >= <span class="tok-num">0</span>),
+    reserved        <span class="tok-fn">integer</span> <span class="tok-kw">NOT NULL DEFAULT</span> <span class="tok-num">0</span> <span class="tok-kw">CHECK</span> (reserved >= <span class="tok-num">0</span>),
+    updated_at      <span class="tok-fn">timestamptz</span> <span class="tok-kw">NOT NULL DEFAULT</span> now()
+);
+
+<span class="tok-kw">CREATE TABLE</span> orders (
+    id              <span class="tok-fn">uuid</span> <span class="tok-kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    buyer_id        <span class="tok-fn">uuid</span> <span class="tok-kw">NOT NULL</span>,
+    status          <span class="tok-fn">text</span> <span class="tok-kw">NOT NULL DEFAULT</span> <span class="tok-str">'pending'</span>,
+    created_at      <span class="tok-fn">timestamptz</span> <span class="tok-kw">NOT NULL DEFAULT</span> now()
+);
+
+<span class="tok-kw">CREATE TABLE</span> order_items (
+    id              <span class="tok-fn">uuid</span> <span class="tok-kw">PRIMARY KEY DEFAULT</span> gen_random_uuid(),
+    order_id        <span class="tok-fn">uuid</span> <span class="tok-kw">NOT NULL REFERENCES</span> orders(id),
+    product_id      <span class="tok-fn">uuid</span> <span class="tok-kw">NOT NULL REFERENCES</span> products(id),
+    seller_id       <span class="tok-fn">uuid</span> <span class="tok-kw">NOT NULL REFERENCES</span> sellers(id),
+    quantity        <span class="tok-fn">integer</span> <span class="tok-kw">NOT NULL CHECK</span> (quantity > <span class="tok-num">0</span>),
+    unit_price_cents <span class="tok-fn">integer</span> <span class="tok-kw">NOT NULL</span>
+);</code></pre>
+                </div>
+
+                <p>
+                    Two decisions here matter more than they look:
+                </p>
+                <ul>
+                    <li>
+                        <strong>One inventory row per product.</strong> No shared "global stock pool" table that
+                        every seller's checkout path touches — that would have been a single hot contention point
+                        at scale.
+                    </li>
+                    <li>
+                        <strong>A <code class="inline">reserved</code> column</strong> separate from
+                        <code class="inline">quantity</code>, so stock can be held during payment processing without
+                        being permanently committed or permanently lost if a payment fails.
+                    </li>
+                </ul>
+
+                <h2 id="race-conditions">Solving Race Conditions</h2>
+                <p>
+                    The overselling bug came from a classic <strong>read-then-write</strong> gap: the application
+                    read the quantity in one query, decided stock was available, then issued a separate
+                    <code class="inline">UPDATE</code> in a second query. Between those two queries, another
+                    request could read the same stale value. The fix is to make the check and the decrement a
+                    single atomic statement, and let PostgreSQL's row locking do the serialization for you —
+                    scoped to exactly one row, not the whole table.
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-head"><span>reserve_stock.sql</span><span>PostgreSQL</span></div>
+                    <pre><code><span class="tok-com">-- Atomic reserve: only succeeds if enough stock exists.</span>
+<span class="tok-com">-- The UPDATE itself acquires the row lock, closing the</span>
+<span class="tok-com">-- read-then-write gap that caused the overselling bug.</span>
+<span class="tok-kw">UPDATE</span> inventory
+<span class="tok-kw">SET</span> reserved = reserved + <span class="tok-num">1</span>,
+    updated_at = now()
+<span class="tok-kw">WHERE</span> product_id = <span class="tok-str">$1</span>
+  <span class="tok-kw">AND</span> (quantity - reserved) >= <span class="tok-num">1</span>
+<span class="tok-kw">RETURNING</span> product_id;
+
+<span class="tok-com">-- If RETURNING yields zero rows, stock wasn't available —</span>
+<span class="tok-com">-- the application treats this as "sold out", not an error.</span></code></pre>
+                </div>
+
+                <p>
+                    This single-statement <code class="inline">UPDATE ... WHERE ... RETURNING</code> pattern works
+                    because PostgreSQL evaluates the <code class="inline">WHERE</code> clause and takes the row
+                    lock as one atomic operation — no other transaction can sneak a write in between the check and
+                    the update, because there is no gap between them. For the rarer case where a batch process
+                    needs to read and reason about a row before writing it, I use an explicit
+                    <code class="inline">SELECT ... FOR UPDATE</code> to hold the lock across the transaction:
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-head"><span>OrderService.php</span><span>PHP 8.2</span></div>
+                    <pre><code>&lt;?php
+
+<span class="tok-kw">declare</span>(strict_types=<span class="tok-num">1</span>);
+
+<span class="tok-kw">final class</span> <span class="tok-fn">OrderService</span>
+{
+    <span class="tok-kw">public function</span> <span class="tok-fn">__construct</span>(<span class="tok-kw">private readonly</span> PDO $db) {}
+
+    <span class="tok-kw">public function</span> <span class="tok-fn">reserveAndCreateOrder</span>(<span class="tok-kw">string</span> $productId, <span class="tok-kw">int</span> $qty): Order
+    {
+        $this-&gt;db-&gt;beginTransaction();
+
+        <span class="tok-kw">try</span> {
+            <span class="tok-com">// Row-level lock: blocks concurrent reservations for</span>
+            <span class="tok-com">// THIS product only — other products remain unaffected.</span>
+            $stmt = $this-&gt;db-&gt;prepare(
+                <span class="tok-str">'SELECT (quantity - reserved) AS available
+                 FROM inventory WHERE product_id = :id FOR UPDATE'</span>
+            );
+            $stmt-&gt;execute([<span class="tok-str">'id'</span> =&gt; $productId]);
+            $available = $stmt-&gt;fetchColumn();
+
+            <span class="tok-kw">if</span> ($available === <span class="tok-kw">false</span> || $available &lt; $qty) {
+                <span class="tok-kw">throw new</span> InsufficientStockException($productId);
+            }
+
+            $update = $this-&gt;db-&gt;prepare(
+                <span class="tok-str">'UPDATE inventory SET reserved = reserved + :qty WHERE product_id = :id'</span>
+            );
+            $update-&gt;execute([<span class="tok-str">'qty'</span> =&gt; $qty, <span class="tok-str">'id'</span> =&gt; $productId]);
+
+            $order = $this-&gt;insertPendingOrder($productId, $qty);
+
+            $this-&gt;db-&gt;commit();
+            <span class="tok-kw">return</span> $order;
+        } <span class="tok-kw">catch</span> (Throwable $e) {
+            $this-&gt;db-&gt;rollBack();
+            <span class="tok-kw">throw</span> $e;
+        }
+    }
+}</code></pre>
+                </div>
+
+                <p>
+                    On the API layer, the same request path wraps this behind a thin idempotency check, so a
+                    retried checkout request (double-click, flaky network) never reserves stock twice for the
+                    same cart:
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-head"><span>checkout.php</span><span>PHP 8.2</span></div>
+                    <pre><code>&lt;?php
+
+<span class="tok-kw">declare</span>(strict_types=<span class="tok-num">1</span>);
+
+<span class="tok-kw">header</span>(<span class="tok-str">'Content-Type: application/json'</span>);
+
+$input = <span class="tok-kw">json_decode</span>(<span class="tok-kw">file_get_contents</span>(<span class="tok-str">'php://input'</span>), <span class="tok-kw">true</span>);
+[<span class="tok-str">'productId'</span> =&gt; $productId, <span class="tok-str">'quantity'</span> =&gt; $quantity, <span class="tok-str">'idempotencyKey'</span> =&gt; $key] = $input;
+
+<span class="tok-com">// Unique constraint on idempotency_key does the</span>
+<span class="tok-com">// deduplication — no distributed lock required.</span>
+$stmt = $pdo-&gt;prepare(<span class="tok-str">'SELECT order_id FROM idempotency_keys WHERE key = :key'</span>);
+$stmt-&gt;execute([<span class="tok-str">'key'</span> =&gt; $key]);
+
+<span class="tok-kw">if</span> ($existingOrderId = $stmt-&gt;fetchColumn()) {
+    <span class="tok-kw">http_response_code</span>(<span class="tok-num">200</span>);
+    <span class="tok-kw">echo</span> <span class="tok-kw">json_encode</span>([<span class="tok-str">'orderId'</span> =&gt; $existingOrderId]);
+    <span class="tok-kw">exit</span>;
+}
+
+<span class="tok-kw">try</span> {
+    $order = $orderService-&gt;reserveAndCreateOrder($productId, (<span class="tok-kw">int</span>) $quantity);
+
+    $insert = $pdo-&gt;prepare(
+        <span class="tok-str">'INSERT INTO idempotency_keys (key, order_id) VALUES (:key, :order_id)'</span>
+    );
+    $insert-&gt;execute([<span class="tok-str">'key'</span> =&gt; $key, <span class="tok-str">'order_id'</span> =&gt; $order-&gt;id]);
+
+    <span class="tok-kw">http_response_code</span>(<span class="tok-num">201</span>);
+    <span class="tok-kw">echo</span> <span class="tok-kw">json_encode</span>($order);
+} <span class="tok-kw">catch</span> (InsufficientStockException $e) {
+    <span class="tok-kw">http_response_code</span>(<span class="tok-num">409</span>);
+    <span class="tok-kw">echo</span> <span class="tok-kw">json_encode</span>([<span class="tok-str">'error'</span> =&gt; <span class="tok-str">'Sold out'</span>]);
+}</code></pre>
+                </div>
+
+                <p>
+                    Under repeated load testing with 500 concurrent checkout attempts against a single
+                    limited-stock SKU, this combination — per-row locking scoped to one product, a separate
+                    <code class="inline">reserved</code> counter, and idempotency keys at the API boundary —
+                    eliminated the overselling bug entirely while keeping checkout throughput for
+                    <em>other</em> products completely unaffected, since locks never escalate beyond the single
+                    row being written.
+                </p>
+
+                <blockquote>
+                    The lesson that generalizes beyond FujiCommerce: concurrency bugs in commerce systems are
+                    almost always a gap between a read and a write. Close the gap with one atomic statement before
+                    reaching for heavier tools like advisory locks or serializable isolation.
+                </blockquote>
+
+                <h3>What I'd evaluate next</h3>
+                <ul>
+                    <li>Partitioning <code class="inline">order_items</code> by seller for sellers with very high
+                        order volume.</li>
+                    <li>A background sweeper that releases <code class="inline">reserved</code> stock for orders
+                        that never reach payment confirmation within a timeout window.</li>
+                    <li>Read replicas for seller-facing analytics dashboards, so reporting queries never compete
+                        with checkout write load.</li>
+                </ul>
+
+                <p>
+                    If you're building — or hiring for — a <strong>high-concurrency fintech system</strong> or a
+                    <strong>multi-seller commerce platform</strong> and want to talk through the schema and
+                    concurrency trade-offs for your own case, <a href="index.html#contact" class="underline hover:no-underline">get in touch</a>.
+                </p>
+            </div>
+        </article>
+
+        <div class="max-w-5xl mx-auto px-6"><div class="border-t hairline"></div></div>
+
+        <!-- Back to blog CTA -->
+        <section class="py-16 px-6">
+            <div class="max-w-3xl mx-auto flex flex-col sm:flex-row gap-4">
+                <a href="blog.html" class="cta-ghost">
+                    <i class="fas fa-arrow-left text-sm"></i> More engineering notes
+                </a>
+                <a href="index.html#contact" class="cta-ghost">
+                    <i class="fas fa-envelope text-sm"></i> Hire me
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-10 px-6 border-t hairline">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <p class="text-sm text-[#6b6b68]">© 2026 Victor Eke</p>
+            <p class="font-mono text-xs text-[#6b6b68]">node · typescript · php · laravel · spring boot · postgresql</p>
+        </div>
+    </footer>
+</body>
+</html>

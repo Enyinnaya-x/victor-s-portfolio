@@ -1,0 +1,267 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Technical blog by Victor Eke, backend engineer. Deep-dive case studies on scalable backend architecture, high-concurrency fintech systems, multi-seller e-commerce infrastructure, Node.js/TypeScript, PHP/Laravel, and Spring Boot.">
+    <meta name="keywords" content="backend engineering blog, Node.js backend engineer, TypeScript backend engineer, PHP developer blog, system design case studies, PostgreSQL concurrency, fintech backend architecture">
+    <meta name="author" content="Victor Eke">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <meta property="og:type" content="website">
+    <meta property="og:site_name" content="Victor Eke">
+    <meta property="og:title" content="Engineering Notes | Victor Eke — Backend Engineer">
+    <meta property="og:description" content="Deep-dive case studies on scalable backend architecture, high-concurrency fintech systems, and multi-seller e-commerce infrastructure.">
+    <meta property="og:url" content="https://www.enyinnaya.xyz/blog.html">
+    <meta property="og:image" content="https://www.enyinnaya.xyz/images/ND5A2793new.jpg">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Engineering Notes | Victor Eke — Backend Engineer">
+    <meta name="twitter:description" content="Deep-dive case studies on scalable backend architecture, high-concurrency fintech systems, and multi-seller e-commerce infrastructure.">
+    <meta name="twitter:creator" content="@EnyitheDev">
+
+    <link rel="canonical" href="https://www.enyinnaya.xyz/blog.html">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "Blog",
+      "name": "Engineering Notes by Victor Eke",
+      "url": "https://www.enyinnaya.xyz/blog.html",
+      "author": {
+        "@type": "Person",
+        "name": "Victor Eke",
+        "url": "https://www.enyinnaya.xyz/"
+      },
+      "blogPost": [
+        {
+          "@type": "BlogPosting",
+          "headline": "Why PHP? Betting on Architecture Over the Language Craze",
+          "url": "https://www.enyinnaya.xyz/why-php-architecture-over-hype.html",
+          "datePublished": "2026-01-29",
+          "author": { "@type": "Person", "name": "Victor Eke" }
+        },
+        {
+          "@type": "BlogPosting",
+          "headline": "Architecting a Scalable Multi-Seller E-Commerce Database in PostgreSQL for FujiCommerce",
+          "url": "https://www.enyinnaya.xyz/fujicommerce-postgresql-case-study.html",
+          "datePublished": "2026-01-15",
+          "author": { "@type": "Person", "name": "Victor Eke" }
+        }
+      ]
+    }
+    </script>
+
+    <title>Engineering Notes | Victor Eke — Backend Engineer</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --ink: #0a0a0a;
+            --paper: #fafaf9;
+            --muted: #6b6b68;
+            --hair: #e2e1de;
+            --hair-strong: #0a0a0a;
+        }
+
+        * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+        }
+
+        .nav-link {
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--ink);
+            transition: width 0.25s ease;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        .hairline { border-color: var(--hair); }
+
+        .cta-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.75rem;
+            border: 1px solid var(--ink);
+            color: var(--ink);
+            border-radius: 2px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .cta-ghost:hover { transform: translateY(-2px); background: var(--ink); color: var(--paper); }
+
+        .social-icon {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 44px;
+            height: 44px;
+            border: 1px solid var(--ink);
+            border-radius: 2px;
+            color: var(--ink);
+            transition: all 0.2s ease;
+        }
+        .social-icon:hover { background: var(--ink); color: var(--paper); transform: translateY(-3px); }
+
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.02em;
+            color: var(--muted);
+        }
+        .eyebrow::before { content: '// '; color: #b8b7b3; }
+
+        .section-title {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 2.25rem;
+            letter-spacing: -0.01em;
+        }
+
+        .article-card {
+            border: 1px solid var(--hair);
+            border-radius: 2px;
+            background: #ffffff;
+            padding: 1.75rem;
+            transition: transform 0.2s ease, border-color 0.2s ease;
+            display: block;
+            text-decoration: none;
+            color: var(--ink);
+        }
+        .article-card:hover {
+            transform: translateY(-3px);
+            border-color: var(--hair-strong);
+        }
+        .article-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border: 1px solid var(--hair);
+            border-radius: 2px;
+            padding: 0.2rem 0.55rem;
+        }
+
+        ::selection { background: var(--ink); color: var(--paper); }
+        a:focus-visible, button:focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 3px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fafaf9]/85 border-b hairline">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="font-display text-lg font-700 tracking-tight">
+                Victor Eke
+            </a>
+            <div class="hidden md:flex gap-8">
+                <a href="index.html#about" class="nav-link text-sm font-medium">About</a>
+                <a href="index.html#stack" class="nav-link text-sm font-medium">Stack</a>
+                <a href="blog.html" class="nav-link text-sm font-medium">Blog</a>
+                <a href="index.html#contact" class="nav-link text-sm font-medium">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <!-- Header -->
+    <header class="pt-40 pb-16 px-6">
+        <div class="max-w-3xl mx-auto">
+            <p class="eyebrow mb-5">engineering notes</p>
+            <h1 class="font-display text-5xl md:text-6xl font-700 mb-8 leading-[1.08] tracking-tight">
+                Backend, in depth.
+            </h1>
+            <p class="text-lg text-[#3a3a38] leading-relaxed max-w-xl">
+                Case studies and write-ups on <strong>scalable backend architecture</strong>,
+                <strong>high-concurrency fintech systems</strong>, and <strong>multi-seller digital commerce
+                infrastructure</strong> — the design decisions, the trade-offs, and the bugs that taught me something.
+            </p>
+        </div>
+    </header>
+
+    <!-- Articles -->
+    <main>
+        <section class="py-12 px-6">
+            <div class="max-w-3xl mx-auto">
+                <div class="grid gap-6">
+
+                    <article>
+                        <a href="why-php-architecture-over-hype.html" class="article-card">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="article-tag">PHP</span>
+                                <span class="article-tag">Engineering Philosophy</span>
+                                <span class="article-tag">Architecture</span>
+                                <time datetime="2026-01-29" class="font-mono text-xs text-[#6b6b68] ml-auto">Jan 29, 2026</time>
+                            </div>
+                            <h2 class="font-display text-2xl font-700 mb-3 tracking-tight leading-snug">
+                                Why PHP? Betting on Architecture Over the Language Craze
+                            </h2>
+                            <p class="text-[#3a3a38] leading-relaxed mb-4">
+                                Why I built a production commerce platform in vanilla PHP 8.2 instead of chasing
+                                the framework of the month — and why the language you choose matters far less
+                                than the architecture you design around it.
+                            </p>
+                            <span class="font-mono text-sm inline-flex items-center gap-2">
+                                Read the post <i class="fas fa-arrow-right text-xs"></i>
+                            </span>
+                        </a>
+                    </article>
+
+                    <article>
+                        <a href="fujicommerce-postgresql-case-study.html" class="article-card">
+                            <div class="flex flex-wrap items-center gap-3 mb-4">
+                                <span class="article-tag">PostgreSQL</span>
+                                <span class="article-tag">PHP</span>
+                                <span class="article-tag">System Design</span>
+                                <span class="article-tag">E-Commerce</span>
+                                <time datetime="2026-01-15" class="font-mono text-xs text-[#6b6b68] ml-auto">Jan 15, 2026</time>
+                            </div>
+                            <h2 class="font-display text-2xl font-700 mb-3 tracking-tight leading-snug">
+                                Architecting a Scalable Multi-Seller E-Commerce Database in PostgreSQL for FujiCommerce
+                            </h2>
+                            <p class="text-[#3a3a38] leading-relaxed mb-4">
+                                How I designed a multi-tenant schema that handles concurrent sellers, shared inventory,
+                                and order integrity without row-level corruption — and the exact PostgreSQL locking
+                                strategy that solved the race conditions.
+                            </p>
+                            <span class="font-mono text-sm inline-flex items-center gap-2">
+                                Read the case study <i class="fas fa-arrow-right text-xs"></i>
+                            </span>
+                        </a>
+                    </article>
+
+                    <!-- Add future posts as additional <article> blocks, same .article-card structure -->
+
+                </div>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-10 px-6 border-t hairline mt-12">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <p class="text-sm text-[#6b6b68]">© 2026 Victor Eke</p>
+            <p class="font-mono text-xs text-[#6b6b68]">node · typescript · php · laravel · spring boot · postgresql</p>
+        </div>
+    </footer>
+</body>
+</html>
