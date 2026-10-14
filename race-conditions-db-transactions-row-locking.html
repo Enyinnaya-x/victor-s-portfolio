@@ -1,0 +1,718 @@
+﻿<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Database transactions and row-level locking (SELECT FOR UPDATE) don't kill every race condition. A walkthrough of the gaps that remain, why idempotency keys aren't a complete fix on their own, and how cache-based cooldown locks close the rest.">
+    <meta name="keywords" content="race condition, database transaction, row-level locking, SELECT FOR UPDATE, idempotency key, distributed lock, Redis lock, cache locking, concurrency control, backend engineering">
+    <meta name="author" content="Victor Eke">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Victor Eke">
+    <meta property="og:title" content="How Race Conditions Can Still Happen Even After Wrapping in a DB Transaction and Row-Level Locking">
+    <meta property="og:description" content="Why transactions and row-level locks aren't a complete fix — and how idempotency keys plus cache-based cooldown locks close the remaining gaps.">
+    <meta property="og:url" content="https://www.enyinnaya.xyz/race-conditions-db-transactions-row-locking.html">
+    <meta property="og:image" content="https://www.enyinnaya.xyz/images/og-race-conditions-db-transactions-row-locking.png">
+    <meta property="og:image:width" content="2400">
+    <meta property="og:image:height" content="1260">
+    <meta property="article:published_time" content="2026-10-14">
+    <meta property="article:author" content="Victor Eke">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="How Race Conditions Can Still Happen Even After Wrapping in a DB Transaction and Row-Level Locking">
+    <meta name="twitter:description" content="Why transactions and row-level locks aren't a complete fix — and how idempotency keys plus cache-based cooldown locks close the remaining gaps.">
+    <meta name="twitter:image" content="https://www.enyinnaya.xyz/images/og-race-conditions-db-transactions-row-locking.png">
+    <meta name="twitter:creator" content="@EnyitheDev">
+
+    <link rel="canonical" href="https://www.enyinnaya.xyz/race-conditions-db-transactions-row-locking.html">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "How Race Conditions Can Still Happen Even After Wrapping in a DB Transaction and Row-Level Locking",
+      "description": "Why transactions and row-level locks aren't a complete fix — and how idempotency keys plus cache-based cooldown locks close the remaining gaps.",
+      "datePublished": "2026-10-14",
+      "dateModified": "2026-10-14",
+      "author": {
+        "@type": "Person",
+        "name": "Victor Eke",
+        "url": "https://www.enyinnaya.xyz/"
+      },
+      "publisher": {
+        "@type": "Person",
+        "name": "Victor Eke"
+      },
+      "mainEntityOfPage": "https://www.enyinnaya.xyz/race-conditions-db-transactions-row-locking.html",
+      "image": "https://www.enyinnaya.xyz/images/ND5A2793new.jpg",
+      "keywords": "race condition, database transaction, row-level locking, idempotency key, distributed lock, Redis, concurrency control"
+    }
+    </script>
+
+    <title>How Race Conditions Can Still Happen Even After Wrapping in a DB Transaction and Row-Level Locking | Victor Eke</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --ink: #0a0a0a;
+            --paper: #fafaf9;
+            --muted: #6b6b68;
+            --hair: #e2e1de;
+            --hair-strong: #0a0a0a;
+        }
+
+        * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+        }
+
+        .nav-link {
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--ink);
+            transition: width 0.25s ease;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        .hairline { border-color: var(--hair); }
+
+        .cta-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.75rem;
+            border: 1px solid var(--ink);
+            color: var(--ink);
+            border-radius: 2px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .cta-ghost:hover { transform: translateY(-2px); background: var(--ink); color: var(--paper); }
+
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.02em;
+            color: var(--muted);
+        }
+        .eyebrow::before { content: '// '; color: #b8b7b3; }
+
+        .article-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border: 1px solid var(--hair);
+            border-radius: 2px;
+            padding: 0.2rem 0.55rem;
+        }
+
+        .prose-article h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.85rem;
+            letter-spacing: -0.01em;
+            margin-top: 3rem;
+            margin-bottom: 1.25rem;
+        }
+        .prose-article h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 0.9rem;
+        }
+        .prose-article p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #3a3a38;
+            margin-bottom: 1.25rem;
+        }
+        .prose-article ul, .prose-article ol {
+            margin: 1rem 0 1.5rem 1.25rem;
+            color: #3a3a38;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        .prose-article ul { list-style: disc; }
+        .prose-article ol { list-style: decimal; }
+        .prose-article li { margin-bottom: 0.4rem; }
+        .prose-article strong { color: var(--ink); }
+        .prose-article code.inline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            background: #efefec;
+            border: 1px solid var(--hair);
+            border-radius: 3px;
+            padding: 0.1rem 0.4rem;
+        }
+
+        /* Code block — signature styling to match the manifest aesthetic */
+        .code-block {
+            border: 1px solid var(--hair-strong);
+            border-radius: 2px;
+            background: #0f0f0e;
+            overflow: hidden;
+            margin: 1.75rem 0;
+        }
+        .code-block-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1.1rem;
+            background: #181816;
+            border-bottom: 1px solid #2a2a27;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #9a9a96;
+        }
+        .code-block pre {
+            margin: 0;
+            padding: 1.25rem 1.5rem;
+            overflow-x: auto;
+        }
+        .code-block code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            color: #e8e8e4;
+            white-space: pre;
+        }
+        .tok-kw { color: #ff7ab2; }
+        .tok-str { color: #a8e6a1; }
+        .tok-com { color: #6b6b68; }
+        .tok-fn { color: #82c3ff; }
+        .tok-num { color: #f5c97a; }
+
+        /* Language dropdown on code blocks that have both Node.js and PHP versions */
+        .lang-select {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #e8e8e4;
+            background: #0f0f0e;
+            border: 1px solid #3a3a37;
+            border-radius: 2px;
+            padding: 0.25rem 0.5rem;
+            cursor: pointer;
+        }
+        .lang-select:hover { border-color: #5a5a56; }
+        .lang-select:focus-visible { outline: 2px solid #82c3ff; outline-offset: 2px; }
+        .lang-panel[hidden] { display: none; }
+
+        blockquote {
+            border-left: 3px solid var(--ink);
+            padding: 0.25rem 0 0.25rem 1.5rem;
+            margin: 1.75rem 0;
+            font-style: italic;
+            color: #3a3a38;
+        }
+
+        ::selection { background: var(--ink); color: var(--paper); }
+        a:focus-visible, button:focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 3px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fafaf9]/85 border-b hairline">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="font-display text-lg font-700 tracking-tight">
+                Victor Eke
+            </a>
+            <div class="hidden md:flex gap-8">
+                <a href="index.html#about" class="nav-link text-sm font-medium">About</a>
+                <a href="index.html#stack" class="nav-link text-sm font-medium">Stack</a>
+                <a href="blog.html" class="nav-link text-sm font-medium">Blog</a>
+                <a href="index.html#contact" class="nav-link text-sm font-medium">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Article header -->
+        <header class="pt-40 pb-12 px-6">
+            <div class="max-w-3xl mx-auto">
+                <a href="blog.html" class="font-mono text-sm text-[#6b6b68] inline-flex items-center gap-2 mb-8 hover:text-[#0a0a0a] transition-colors">
+                    <i class="fas fa-arrow-left text-xs"></i> Back to all posts
+                </a>
+                <div class="flex flex-wrap items-center gap-3 mb-6">
+                    <span class="article-tag">Concurrency</span>
+                    <span class="article-tag">PostgreSQL</span>
+                    <span class="article-tag">Redis</span>
+                    <span class="article-tag">System Design</span>
+                    <time datetime="2026-10-14" class="font-mono text-xs text-[#6b6b68]">Oct 14, 2026</time>
+                </div>
+                <h1 class="font-display text-4xl md:text-5xl font-700 mb-6 leading-[1.1] tracking-tight">
+                    How Race Conditions Can Still Happen Even After Wrapping in a DB Transaction and Row-Level Locking
+                </h1>
+                <p class="text-lg text-[#3a3a38] leading-relaxed max-w-xl">
+                    Transactions and <code class="inline">SELECT ... FOR UPDATE</code> solve the race condition
+                    everyone learns about first. They don't solve all of them. Here's where they fall short, and
+                    why the real fix is layering idempotency keys with cache-based cooldown locks — not picking one.
+                </p>
+            </div>
+        </header>
+
+        <div class="max-w-5xl mx-auto px-6"><div class="border-t hairline"></div></div>
+
+        <!-- Article body -->
+        <article class="py-16 px-6">
+            <div class="max-w-3xl mx-auto prose-article">
+
+                <p>
+                    Take a fairly ordinary fintech backend: a wallet service that moves money between users. The
+                    classic race condition here is two concurrent transfer requests both reading the same wallet
+                    balance and both succeeding, overdrawing the account. The textbook fix is to wrap the debit in
+                    a transaction and take a row lock on that specific wallet row — either an explicit
+                    <code class="inline">SELECT ... FOR UPDATE</code>, or a single atomic
+                    <code class="inline">UPDATE ... WHERE balance >= amount</code>. For that specific problem — two
+                    writers racing to mutate <strong>the same, already-existing row</strong> — it works. It's also
+                    the point where a lot of developers stop thinking about concurrency, because the obvious bug is
+                    gone and the logs look clean.
+                </p>
+                <p>
+                    Then, weeks later, production shows a duplicate transfer, a double-charged wallet, or a bonus
+                    credited twice to the same user — inside a codebase that already wraps the write in a
+                    transaction with proper row locking. The instinct is to assume the lock "didn't work." It
+                    worked exactly as designed. The race just happened somewhere the lock was never watching.
+                </p>
+
+                <h2 id="what-row-locks-actually-cover">What a Transaction and Row Lock Actually Cover</h2>
+                <p>
+                    <code class="inline">SELECT ... FOR UPDATE</code> and an atomic <code class="inline">UPDATE</code>
+                    guarantee one thing precisely: once a row exists, no second transaction can read-and-mutate it
+                    out from under the first. That guarantee has a boundary, and the boundary is exactly where
+                    most "impossible" race conditions in production actually live:
+                </p>
+                <ul>
+                    <li>
+                        <strong>There's no row to lock yet.</strong> A row lock only protects a row that already
+                        exists. If the race is "should this row be <em>created</em> at all" — first-time signup
+                        bonus, first wallet-funding webhook for a reference, first transfer for an idempotency key —
+                        two concurrent transactions can both run their "does this exist?" check, both see nothing,
+                        and both proceed to <code class="inline">INSERT</code>. There was never a row for either of
+                        them to lock.
+                    </li>
+                    <li>
+                        <strong>The race crosses transaction or connection boundaries.</strong> A lock held inside
+                        transaction A is invisible to a process that hasn't started transaction B yet — a queue
+                        worker, a webhook retry, a separate microservice hitting its own database. If the "same"
+                        logical operation can be triggered from more than one entry point, a lock scoped to one
+                        database connection doesn't stop the others.
+                    </li>
+                    <li>
+                        <strong>The side effect lives outside the transaction.</strong> Calling a payment gateway,
+                        sending an SMS, or dispatching an email inside (or right after) a locked transaction means
+                        the lock protects your database row, but not the external call. If the transaction commits,
+                        the lock releases, and then a retry or a duplicate request arrives — the row is already
+                        "safe," but the external side effect can still fire twice.
+                    </li>
+                    <li>
+                        <strong>The retry doesn't even reach the row.</strong> Flaky networks, client double-clicks,
+                        and "the response timed out so the client retried" are the most common real-world triggers
+                        — and they often show up as two <em>separate</em> requests hitting two <em>separate</em>
+                        database transactions, both perfectly well-behaved, both racing to create the same logical
+                        thing a few milliseconds apart.
+                    </li>
+                </ul>
+
+                <h2 id="idempotency-key-first-instinct">The First Instinct: An Idempotency Key</h2>
+                <p>
+                    This is usually where an idempotency key comes in, and it's the right instinct — a client
+                    attaches a unique key to a logical operation, the server remembers which keys it has already
+                    processed, and a retried request returns the original result instead of doing the work again.
+                    The catch: a naive implementation just <strong>moves the exact same race condition up one
+                    layer</strong>, from the wallet row to the idempotency-key row.
+                </p>
+
+                <div class="code-block" data-code-group>
+                    <div class="code-block-head">
+                        <span>Idempotency check — the broken version</span>
+                        <select class="lang-select" aria-label="Choose code language">
+                            <option value="node" selected>Node.js</option>
+                            <option value="php">PHP</option>
+                        </select>
+                    </div>
+                    <pre class="lang-panel" data-lang-panel="node"><code><span class="tok-com">// This "check, then act, then record" sequence has the</span>
+<span class="tok-com">// exact same gap as the original overselling bug — it's</span>
+<span class="tok-com">// just one layer further out, on the idempotency key.</span>
+
+<span class="tok-kw">const</span> existing = <span class="tok-kw">await</span> pool.<span class="tok-fn">query</span>(
+  <span class="tok-str">'SELECT transfer_id FROM idempotency_keys WHERE key = $1'</span>,
+  [key]
+);
+
+<span class="tok-kw">if</span> (existing.rows.length &gt; <span class="tok-num">0</span>) {
+  <span class="tok-kw">return</span> res.<span class="tok-fn">json</span>({ transferId: existing.rows[<span class="tok-num">0</span>].transfer_id });
+}
+
+<span class="tok-com">// Two requests with the same key can both reach here before</span>
+<span class="tok-com">// either one has written a row to idempotency_keys. Both</span>
+<span class="tok-com">// proceed. Both execute the transfer.</span>
+<span class="tok-kw">const</span> transfer = <span class="tok-kw">await</span> transferService.<span class="tok-fn">processTransfer</span>(fromWalletId, toWalletId, amount);
+
+<span class="tok-kw">await</span> pool.<span class="tok-fn">query</span>(
+  <span class="tok-str">'INSERT INTO idempotency_keys (key, transfer_id) VALUES ($1, $2)'</span>,
+  [key, transfer.id]
+);</code></pre>
+                    <pre class="lang-panel" data-lang-panel="php" hidden><code>&lt;?php
+<span class="tok-com">// This "check, then act, then record" sequence has the</span>
+<span class="tok-com">// exact same gap as the original overselling bug — it's</span>
+<span class="tok-com">// just one layer further out, on the idempotency key.</span>
+
+$stmt = $pdo-&gt;prepare(<span class="tok-str">'SELECT transfer_id FROM idempotency_keys WHERE key = :key'</span>);
+$stmt-&gt;execute([<span class="tok-str">'key'</span> =&gt; $key]);
+
+<span class="tok-kw">if</span> ($existing = $stmt-&gt;fetchColumn()) {
+    <span class="tok-kw">echo</span> <span class="tok-kw">json_encode</span>([<span class="tok-str">'transferId'</span> =&gt; $existing]);
+    <span class="tok-kw">exit</span>;
+}
+
+<span class="tok-com">// Two requests with the same key can both reach here before</span>
+<span class="tok-com">// either one has written a row to idempotency_keys. Both</span>
+<span class="tok-com">// proceed. Both execute the transfer.</span>
+$transfer = $transferService-&gt;processTransfer($fromWalletId, $toWalletId, $amount);
+
+$pdo-&gt;prepare(<span class="tok-str">'INSERT INTO idempotency_keys (key, transfer_id) VALUES (:key, :tid)'</span>)
+    -&gt;execute([<span class="tok-str">'key'</span> =&gt; $key, <span class="tok-str">'tid'</span> =&gt; $transfer-&gt;id]);</code></pre>
+                </div>
+
+                <p>
+                    The fix for <em>this</em> layer is the same principle as before: collapse the check and the
+                    claim into one atomic operation, and let the database enforce uniqueness instead of your
+                    application logic. In practice that means a <code class="inline">UNIQUE</code> constraint on
+                    the key column, an optimistic insert, and handling the constraint violation as the "already
+                    processed" branch — not a separate read beforehand.
+                </p>
+
+                <div class="code-block" data-code-group>
+                    <div class="code-block-head">
+                        <span>Idempotency check — insert-first, race-free</span>
+                        <select class="lang-select" aria-label="Choose code language">
+                            <option value="node" selected>Node.js</option>
+                            <option value="php">PHP</option>
+                        </select>
+                    </div>
+                    <pre class="lang-panel" data-lang-panel="node"><code><span class="tok-com">// idempotency_keys.key has a UNIQUE constraint. Claiming the</span>
+<span class="tok-com">// key IS the atomic operation — there is no read-then-write</span>
+<span class="tok-com">// gap left for a second request to slip through.</span>
+<span class="tok-kw">try</span> {
+  <span class="tok-kw">await</span> pool.<span class="tok-fn">query</span>(
+    <span class="tok-str">'INSERT INTO idempotency_keys (key, status) VALUES ($1, $2)'</span>,
+    [key, <span class="tok-str">'processing'</span>]
+  );
+} <span class="tok-kw">catch</span> (err) {
+  <span class="tok-kw">if</span> (<span class="tok-fn">isUniqueViolation</span>(err)) {
+    <span class="tok-com">// Someone already claimed this key — poll/return its result</span>
+    <span class="tok-kw">return</span> <span class="tok-kw">await</span> <span class="tok-fn">waitForExistingResult</span>(key);
+  }
+  <span class="tok-kw">throw</span> err;
+}
+
+<span class="tok-kw">const</span> transfer = <span class="tok-kw">await</span> transferService.<span class="tok-fn">processTransfer</span>(fromWalletId, toWalletId, amount);
+
+<span class="tok-kw">await</span> pool.<span class="tok-fn">query</span>(
+  <span class="tok-str">'UPDATE idempotency_keys SET status = $1, transfer_id = $2 WHERE key = $3'</span>,
+  [<span class="tok-str">'done'</span>, transfer.id, key]
+);</code></pre>
+                    <pre class="lang-panel" data-lang-panel="php" hidden><code>&lt;?php
+<span class="tok-com">// idempotency_keys.key has a UNIQUE constraint. Claiming the</span>
+<span class="tok-com">// key IS the atomic operation — there is no read-then-write</span>
+<span class="tok-com">// gap left for a second request to slip through.</span>
+<span class="tok-kw">try</span> {
+    $pdo-&gt;prepare(
+        <span class="tok-str">'INSERT INTO idempotency_keys (key, status) VALUES (:key, :status)'</span>
+    )-&gt;execute([<span class="tok-str">'key'</span> =&gt; $key, <span class="tok-str">'status'</span> =&gt; <span class="tok-str">'processing'</span>]);
+} <span class="tok-kw">catch</span> (UniqueConstraintViolation $e) {
+    <span class="tok-com">// Someone already claimed this key — poll/return its result</span>
+    <span class="tok-kw">return</span> $this-&gt;waitForExistingResult($key);
+}
+
+$transfer = $transferService-&gt;processTransfer($fromWalletId, $toWalletId, $amount);
+
+$pdo-&gt;prepare(
+    <span class="tok-str">'UPDATE idempotency_keys SET status = :s, transfer_id = :tid WHERE key = :key'</span>
+)-&gt;execute([<span class="tok-str">'s'</span> =&gt; <span class="tok-str">'done'</span>, <span class="tok-str">'tid'</span> =&gt; $transfer-&gt;id, <span class="tok-str">'key'</span> =&gt; $key]);</code></pre>
+                </div>
+
+                <p>
+                    This closes the gap for the case where the client <em>cooperates</em> — it generates one key
+                    per logical action and sends that same key on every retry. In the real world, that assumption
+                    breaks more often than you'd like:
+                </p>
+                <ul>
+                    <li>A buggy or third-party client generates a new key on every retry instead of reusing one.</li>
+                    <li>There's no key at all — a GET-like "claim my daily bonus" button with no client-supplied
+                        identifier.</li>
+                    <li>A user genuinely double-clicks, or opens two tabs, firing two independent requests that
+                        were never going to share a key because they were never the same client-side attempt.</li>
+                    <li>A flood of identical requests arrives faster than a single <code class="inline">INSERT</code>
+                        and its transaction commit can complete, so you still take real load on the database for
+                        every duplicate before the constraint ever gets a chance to reject one.</li>
+                </ul>
+                <p>
+                    An idempotency key is a durability guarantee for a specific, cooperating client replaying a
+                    specific action. It isn't a general-purpose brake on request volume, and it doesn't protect you
+                    from the simplest case of all: <strong>the same user (or the same button) just being clicked
+                    more than once, with or without a key attached.</strong>
+                </p>
+
+                <h2 id="cache-cooldown-lock">The Missing Layer: A Cache-Based Cooldown Lock</h2>
+                <p>
+                    This is where a fast, cheap, outer guard earns its keep — a short-lived lock in Redis (or
+                    equivalent) that sits in front of the database entirely. The rule is deliberately simple:
+                    <strong>no matter how many requests arrive for a given action, accept the first one and reject
+                    every other one for a cooldown window</strong>, regardless of whether they carry an
+                    idempotency key, regardless of whether they're "legitimate" retries, and regardless of count —
+                    two, ten, or a thousand concurrent attempts all collapse to one winner.
+                </p>
+                <p>
+                    The mechanism is a single atomic <code class="inline">SET key value NX EX ttl</code> —
+                    "set this key only if it doesn't already exist, and expire it automatically after
+                    <code class="inline">ttl</code> seconds." Redis executes that as one indivisible command, so
+                    there is no check-then-set gap to race against, even under genuinely simultaneous requests:
+                </p>
+
+                <div class="code-block" data-code-group>
+                    <div class="code-block-head">
+                        <span>CooldownLock</span>
+                        <select class="lang-select" aria-label="Choose code language">
+                            <option value="node" selected>Node.js</option>
+                            <option value="php">PHP</option>
+                        </select>
+                    </div>
+                    <pre class="lang-panel" data-lang-panel="node"><code><span class="tok-kw">import</span> { Redis } <span class="tok-kw">from</span> <span class="tok-str">'ioredis'</span>;
+
+<span class="tok-kw">export class</span> <span class="tok-fn">CooldownLock</span> {
+  <span class="tok-kw">constructor</span>(<span class="tok-kw">private readonly</span> redis: Redis) {}
+
+  <span class="tok-com">// Returns true only for the request that wins the race.</span>
+  <span class="tok-com">// Every other caller — no matter how many, no matter why —</span>
+  <span class="tok-com">// gets false and must be rejected, not queued, not retried.</span>
+  <span class="tok-kw">async</span> <span class="tok-fn">tryAcquire</span>(scope: <span class="tok-kw">string</span>, ttlSeconds = <span class="tok-num">5</span>): <span class="tok-kw">Promise</span>&lt;<span class="tok-kw">boolean</span>&gt; {
+    <span class="tok-kw">const</span> lockKey = <span class="tok-str">`cooldown:${scope}`</span>;
+
+    <span class="tok-kw">const</span> result = <span class="tok-kw">await</span> <span class="tok-kw">this</span>.redis.<span class="tok-fn">set</span>(lockKey, <span class="tok-str">'1'</span>, <span class="tok-str">'EX'</span>, ttlSeconds, <span class="tok-str">'NX'</span>);
+    <span class="tok-kw">return</span> result === <span class="tok-str">'OK'</span>;
+  }
+}</code></pre>
+                    <pre class="lang-panel" data-lang-panel="php" hidden><code>&lt;?php
+
+<span class="tok-kw">declare</span>(strict_types=<span class="tok-num">1</span>);
+
+<span class="tok-kw">final class</span> <span class="tok-fn">CooldownLock</span>
+{
+    <span class="tok-kw">public function</span> <span class="tok-fn">__construct</span>(<span class="tok-kw">private readonly</span> Redis $redis) {}
+
+    <span class="tok-com">// Returns true only for the request that wins the race.</span>
+    <span class="tok-com">// Every other caller — no matter how many, no matter why —</span>
+    <span class="tok-com">// gets false and must be rejected, not queued, not retried.</span>
+    <span class="tok-kw">public function</span> <span class="tok-fn">tryAcquire</span>(<span class="tok-kw">string</span> $scope, <span class="tok-kw">int</span> $ttlSeconds = <span class="tok-num">5</span>): <span class="tok-kw">bool</span>
+    {
+        $lockKey = <span class="tok-str">"cooldown:{$scope}"</span>;
+
+        <span class="tok-kw">return</span> (<span class="tok-kw">bool</span>) $this-&gt;redis-&gt;set(
+            $lockKey,
+            <span class="tok-str">'1'</span>,
+            [<span class="tok-str">'NX'</span>, <span class="tok-str">'EX'</span> =&gt; $ttlSeconds]
+        );
+    }
+}</code></pre>
+                </div>
+
+                <div class="code-block" data-code-group>
+                    <div class="code-block-head">
+                        <span>Initiate transfer endpoint</span>
+                        <select class="lang-select" aria-label="Choose code language">
+                            <option value="node" selected>Node.js</option>
+                            <option value="php">PHP</option>
+                        </select>
+                    </div>
+                    <pre class="lang-panel" data-lang-panel="node"><code><span class="tok-com">// Scope the lock to the specific user + action, not globally —</span>
+<span class="tok-com">// one user's cooldown should never block another user's request.</span>
+<span class="tok-kw">const</span> scope = <span class="tok-str">`user:${userId}:initiate-transfer`</span>;
+
+<span class="tok-kw">if</span> (!(<span class="tok-kw">await</span> cooldownLock.<span class="tok-fn">tryAcquire</span>(scope, <span class="tok-num">5</span>))) {
+  res.<span class="tok-fn">status</span>(<span class="tok-num">429</span>).<span class="tok-fn">json</span>({ error: <span class="tok-str">'Request already in progress, try again shortly.'</span> });
+  <span class="tok-kw">return</span>;
+}
+
+<span class="tok-com">// Only the single request that acquired the lock gets here.</span>
+<span class="tok-com">// The DB transaction + unique constraint below are the second,</span>
+<span class="tok-com">// durable line of defense — not a replacement for this one.</span>
+<span class="tok-kw">try</span> {
+  <span class="tok-kw">const</span> result = <span class="tok-kw">await</span> transferService.<span class="tok-fn">processTransfer</span>(fromWalletId, toWalletId, amount);
+  res.<span class="tok-fn">status</span>(<span class="tok-num">201</span>).<span class="tok-fn">json</span>(result);
+} <span class="tok-kw">catch</span> (err) {
+  res.<span class="tok-fn">status</span>(<span class="tok-num">500</span>).<span class="tok-fn">json</span>({ error: <span class="tok-str">'Failed to process transfer.'</span> });
+}</code></pre>
+                    <pre class="lang-panel" data-lang-panel="php" hidden><code>&lt;?php
+<span class="tok-com">// Scope the lock to the specific user + action, not globally —</span>
+<span class="tok-com">// one user's cooldown should never block another user's request.</span>
+$scope = <span class="tok-str">"user:{$userId}:initiate-transfer"</span>;
+
+<span class="tok-kw">if</span> (!$cooldownLock-&gt;tryAcquire($scope, ttlSeconds: <span class="tok-num">5</span>)) {
+    <span class="tok-kw">http_response_code</span>(<span class="tok-num">429</span>);
+    <span class="tok-kw">echo</span> <span class="tok-kw">json_encode</span>([<span class="tok-str">'error'</span> =&gt; <span class="tok-str">'Request already in progress, try again shortly.'</span>]);
+    <span class="tok-kw">exit</span>;
+}
+
+<span class="tok-com">// Only the single request that acquired the lock gets here.</span>
+<span class="tok-com">// The DB transaction + unique constraint below are the second,</span>
+<span class="tok-com">// durable line of defense — not a replacement for this one.</span>
+<span class="tok-kw">try</span> {
+    $result = $transferService-&gt;processTransfer($fromWalletId, $toWalletId, $amount);
+    <span class="tok-kw">http_response_code</span>(<span class="tok-num">201</span>);
+    <span class="tok-kw">echo</span> <span class="tok-kw">json_encode</span>($result);
+} <span class="tok-kw">catch</span> (Throwable $e) {
+    <span class="tok-kw">http_response_code</span>(<span class="tok-num">500</span>);
+    <span class="tok-kw">echo</span> <span class="tok-kw">json_encode</span>([<span class="tok-str">'error'</span> =&gt; <span class="tok-str">'Failed to process transfer.'</span>]);
+}</code></pre>
+                </div>
+
+                <p>
+                    Three details make this pattern work rather than just move the problem again:
+                </p>
+                <ul>
+                    <li>
+                        <strong>Scope the key narrowly.</strong> Lock on <code class="inline">user + action</code>
+                        (or <code class="inline">resource-id + action</code>), never on the action alone — a
+                        global lock on "initiate-transfer" would serialize every user in the system against each
+                        other, which is a self-inflicted outage, not a concurrency fix.
+                    </li>
+                    <li>
+                        <strong>Set the TTL above your worst-case processing time, not below it.</strong> If the
+                        lock expires while the original request is still mid-flight, a second request can slip in
+                        and the cooldown did nothing. Measure your p99 for the protected operation and pad it.
+                    </li>
+                    <li>
+                        <strong>Reject, don't queue.</strong> The point of a cooldown is to shed duplicate work
+                        immediately and cheaply. Queueing rejected requests to "process later" reintroduces the
+                        same race one step downstream — it just delays it.
+                    </li>
+                </ul>
+
+                <h2 id="layering-the-defenses">Layering the Defenses, Not Choosing One</h2>
+                <p>
+                    None of these three mechanisms replace each other — they cover different failure modes, and
+                    production systems need all three stacked, outermost to innermost:
+                </p>
+                <ol>
+                    <li>
+                        <strong>Cache cooldown lock (edge of the request).</strong> Cheap, fast, rejects duplicate
+                        or flooding requests before they ever touch the database — regardless of whether a key was
+                        supplied, regardless of how many copies of the request arrived.
+                    </li>
+                    <li>
+                        <strong>Idempotency key with a unique constraint (durability boundary).</strong> Survives
+                        Redis restarts, lock expiry, and legitimate retries that arrive after the cooldown window
+                        has passed — gives a cooperating client a correct, replayable result instead of a duplicate
+                        side effect.
+                    </li>
+                    <li>
+                        <strong>Transaction + row-level lock (data integrity boundary).</strong> Guarantees that
+                        once work reaches the database, the actual rows being mutated can't be corrupted by a
+                        second concurrent writer — the baseline guarantee described earlier in this post.
+                    </li>
+                </ol>
+                <p>
+                    Remove the outer layer and you're back to taking full database load for every duplicate,
+                    client bug, or double-click, relying entirely on a unique constraint to clean up after the
+                    fact. Remove the middle layer and a legitimate retry that arrives a few seconds late — after
+                    the cooldown expired — duplicates the side effect. Remove the inner layer and you're trusting
+                    application code, not the database, to serialize writes to a row that multiple processes can
+                    still reach directly.
+                </p>
+
+                <blockquote>
+                    A row lock protects a row. An idempotency key protects a cooperating client's retry. A cooldown
+                    lock protects against volume and misbehaving clients. None of the three is "the" fix for race
+                    conditions — they're different layers of the same defense, and the bugs that reach production
+                    are almost always the layer nobody added.
+                </blockquote>
+
+                <h3>What I'd evaluate next</h3>
+                <ul>
+                    <li>Whether the cooldown lock needs to survive a single Redis node failing — i.e. whether the
+                        operation is sensitive enough to warrant a multi-node consensus lock instead of a single
+                        instance.</li>
+                    <li>Structured logging on every lock rejection, so a spike in 429s from this path is visible as
+                        a signal, not just silently dropped traffic.</li>
+                    <li>Whether the idempotency key table needs its own TTL/cleanup job so it doesn't grow
+                        unbounded for high-volume, short-lived actions.</li>
+                </ul>
+
+                <p>
+                    If you're debugging a "but it's already in a transaction" race condition in your own system, or
+                    designing the concurrency model for a new one, <a href="index.html#contact" class="underline hover:no-underline">get in touch</a> —
+                    happy to talk through the specific layers your case needs.
+                </p>
+            </div>
+        </article>
+
+        <div class="max-w-5xl mx-auto px-6"><div class="border-t hairline"></div></div>
+
+        <!-- Back to blog CTA -->
+        <section class="py-16 px-6">
+            <div class="max-w-3xl mx-auto flex flex-col sm:flex-row gap-4">
+                <a href="blog.html" class="cta-ghost">
+                    <i class="fas fa-arrow-left text-sm"></i> More engineering notes
+                </a>
+                <a href="index.html#contact" class="cta-ghost">
+                    <i class="fas fa-envelope text-sm"></i> Contact me
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-10 px-6 border-t hairline">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <p class="text-sm text-[#6b6b68]">© 2026 Victor Eke</p>
+            <p class="font-mono text-xs text-[#6b6b68]">node · typescript · php · laravel · spring boot · postgresql</p>
+        </div>
+    </footer>
+
+    <!-- Code snippets with both Node.js and PHP versions: dropdown toggles the matching panel. -->
+    <script>
+        document.querySelectorAll('[data-code-group]').forEach(function (group) {
+            var select = group.querySelector('.lang-select');
+            var panels = group.querySelectorAll('.lang-panel');
+
+            function applyLang(lang) {
+                panels.forEach(function (panel) {
+                    panel.hidden = panel.getAttribute('data-lang-panel') !== lang;
+                });
+            }
+
+            if (select) {
+                select.addEventListener('change', function () { applyLang(select.value); });
+                applyLang(select.value);
+            }
+        });
+    </script>
+</body>
+</html>
