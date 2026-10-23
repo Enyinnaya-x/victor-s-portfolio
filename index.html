@@ -74,6 +74,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/nav.css">
     <style>
         :root {
             --ink: #0a0a0a;
@@ -102,22 +103,6 @@
         @media (prefers-reduced-motion: reduce) {
             .animate-in { opacity: 1; }
         }
-
-        .nav-link {
-            position: relative;
-            transition: color 0.2s ease;
-        }
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: -3px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: var(--ink);
-            transition: width 0.25s ease;
-        }
-        .nav-link:hover::after { width: 100%; }
 
         .hairline { border-color: var(--hair); }
 
@@ -216,16 +201,34 @@
 </head>
 <body class="antialiased">
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fafaf9]/85 border-b hairline">
-        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+    <nav id="site-nav" class="site-nav fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fafaf9]/85 border-b hairline" aria-label="Main navigation">
+        <div class="nav-bar-inner max-w-5xl mx-auto px-6 py-4 flex justify-between items-center relative z-[70]">
             <a href="#home" class="font-display text-lg font-700 tracking-tight">
                 Victor Eke
             </a>
-            <div class="hidden md:flex gap-8">
+            <div class="hidden md:flex items-center gap-8">
                 <a href="#about" class="nav-link text-sm font-medium">About</a>
                 <a href="#stack" class="nav-link text-sm font-medium">Stack</a>
                 <a href="blog.html" class="nav-link text-sm font-medium">Blog</a>
                 <a href="#contact" class="nav-link text-sm font-medium">Contact</a>
+            </div>
+            <button type="button" class="nav-toggle md:hidden" aria-expanded="false" aria-controls="mobile-nav-panel" aria-label="Open menu">
+                <span class="nav-toggle-lines" aria-hidden="true">
+                    <span class="nav-toggle-bar"></span>
+                    <span class="nav-toggle-bar"></span>
+                    <span class="nav-toggle-bar"></span>
+                </span>
+            </button>
+        </div>
+        <div id="mobile-nav-panel" class="mobile-nav-panel md:hidden" aria-hidden="true">
+            <div class="mobile-nav-backdrop" tabindex="-1" aria-hidden="true"></div>
+            <div class="mobile-nav-drawer">
+                <ul class="mobile-nav-list max-w-5xl mx-auto">
+                    <li><a href="#about" class="mobile-nav-link">About</a></li>
+                    <li><a href="#stack" class="mobile-nav-link">Stack</a></li>
+                    <li><a href="blog.html" class="mobile-nav-link">Blog</a></li>
+                    <li><a href="#contact" class="mobile-nav-link">Contact</a></li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -376,28 +379,6 @@
     }
     </script>
 
-    <script>
-        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
-            anchor.addEventListener('click', function (e) {
-                e.preventDefault();
-                const target = document.querySelector(this.getAttribute('href'));
-                if (target) {
-                    const headerOffset = 80;
-                    const elementPosition = target.getBoundingClientRect().top;
-                    const offsetPosition = elementPosition + window.pageYOffset - headerOffset;
-                    window.scrollTo({ top: offsetPosition, behavior: 'smooth' });
-                }
-            });
-        });
-
-        const nav = document.querySelector('nav');
-        window.addEventListener('scroll', () => {
-            if (window.scrollY > 50) {
-                nav.classList.add('bg-white/90');
-            } else {
-                nav.classList.remove('bg-white/90');
-            }
-        });
-    </script>
+    <script src="js/nav.js" defer></script>
 </body>
 </html>

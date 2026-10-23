@@ -54,6 +54,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="css/nav.css">
     <style>
         :root {
             --ink: #0a0a0a;
@@ -71,22 +72,6 @@
             background: var(--paper);
             color: var(--ink);
         }
-
-        .nav-link {
-            position: relative;
-            transition: color 0.2s ease;
-        }
-        .nav-link::after {
-            content: '';
-            position: absolute;
-            bottom: -3px;
-            left: 0;
-            width: 0;
-            height: 1px;
-            background: var(--ink);
-            transition: width 0.25s ease;
-        }
-        .nav-link:hover::after { width: 100%; }
 
         .hairline { border-color: var(--hair); }
 
@@ -237,16 +222,34 @@
 </head>
 <body class="antialiased">
     <!-- Navigation -->
-    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fafaf9]/85 border-b hairline">
-        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+    <nav id="site-nav" class="site-nav fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fafaf9]/85 border-b hairline" aria-label="Main navigation">
+        <div class="nav-bar-inner max-w-5xl mx-auto px-6 py-4 flex justify-between items-center relative z-[70]">
             <a href="index.html" class="font-display text-lg font-700 tracking-tight">
                 Victor Eke
             </a>
-            <div class="hidden md:flex gap-8">
+            <div class="hidden md:flex items-center gap-8">
                 <a href="index.html#about" class="nav-link text-sm font-medium">About</a>
                 <a href="index.html#stack" class="nav-link text-sm font-medium">Stack</a>
                 <a href="blog.html" class="nav-link text-sm font-medium">Blog</a>
                 <a href="index.html#contact" class="nav-link text-sm font-medium">Contact</a>
+            </div>
+            <button type="button" class="nav-toggle md:hidden" aria-expanded="false" aria-controls="mobile-nav-panel" aria-label="Open menu">
+                <span class="nav-toggle-lines" aria-hidden="true">
+                    <span class="nav-toggle-bar"></span>
+                    <span class="nav-toggle-bar"></span>
+                    <span class="nav-toggle-bar"></span>
+                </span>
+            </button>
+        </div>
+        <div id="mobile-nav-panel" class="mobile-nav-panel md:hidden" aria-hidden="true">
+            <div class="mobile-nav-backdrop" tabindex="-1" aria-hidden="true"></div>
+            <div class="mobile-nav-drawer">
+                <ul class="mobile-nav-list max-w-5xl mx-auto">
+                    <li><a href="index.html#about" class="mobile-nav-link">About</a></li>
+                    <li><a href="index.html#stack" class="mobile-nav-link">Stack</a></li>
+                    <li><a href="blog.html" class="mobile-nav-link">Blog</a></li>
+                    <li><a href="index.html#contact" class="mobile-nav-link">Contact</a></li>
+                </ul>
             </div>
         </div>
     </nav>
@@ -714,5 +717,6 @@ $scope = <span class="tok-str">"user:{$userId}:initiate-transfer"</span>;
             }
         });
     </script>
+    <script src="js/nav.js" defer></script>
 </body>
 </html>
