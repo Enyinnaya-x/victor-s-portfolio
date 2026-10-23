@@ -1,0 +1,476 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="description" content="Why engineers write clever code to feel smart, how it quietly hurts maintainability, and the simple rule I follow now: write for the person reading it at 3am.">
+    <meta name="keywords" content="clean code, readable code, code maintainability, over-engineering, ternary vs if else, simple code, software engineering opinion, backend developer blog">
+    <meta name="author" content="Victor Eke">
+    <meta name="robots" content="index, follow, max-snippet:-1, max-image-preview:large, max-video-preview:-1">
+
+    <meta property="og:type" content="article">
+    <meta property="og:site_name" content="Victor Eke">
+    <meta property="og:title" content="Fancy Code Is Not Good Code: Why I'm Choosing Boring on Purpose">
+    <meta property="og:description" content="Clever code feels good to write and bad to read. Here's why I choose boring, maintainable code on purpose.">
+    <meta property="og:url" content="https://www.enyinnaya.xyz/fancy-code-vs-functional-code.html">
+    <meta property="og:image" content="https://www.enyinnaya.xyz/images/og-fancy-code-vs-functional-code.png">
+    <meta property="og:image:width" content="2400">
+    <meta property="og:image:height" content="1260">
+    <meta property="article:published_time" content="2026-10-23">
+    <meta property="article:author" content="Victor Eke">
+
+    <meta name="twitter:card" content="summary_large_image">
+    <meta name="twitter:title" content="Fancy Code Is Not Good Code: Why I'm Choosing Boring on Purpose">
+    <meta name="twitter:description" content="Clever code feels good to write and bad to read. Here's why I choose boring, maintainable code on purpose.">
+    <meta name="twitter:image" content="https://www.enyinnaya.xyz/images/og-fancy-code-vs-functional-code.png">
+    <meta name="twitter:creator" content="@EnyitheDev">
+
+    <link rel="canonical" href="https://www.enyinnaya.xyz/fancy-code-vs-functional-code.html">
+
+    <script type="application/ld+json">
+    {
+      "@context": "https://schema.org",
+      "@type": "BlogPosting",
+      "headline": "Fancy Code Is Not Good Code: Why I'm Choosing Boring on Purpose",
+      "description": "Why engineers write clever code to feel smart, how it quietly hurts maintainability, and the simple rule I follow now: write for the person reading it at 3am.",
+      "datePublished": "2026-10-23",
+      "dateModified": "2026-10-23",
+      "author": {
+        "@type": "Person",
+        "name": "Victor Eke",
+        "url": "https://www.enyinnaya.xyz/"
+      },
+      "publisher": {
+        "@type": "Person",
+        "name": "Victor Eke"
+      },
+      "mainEntityOfPage": "https://www.enyinnaya.xyz/fancy-code-vs-functional-code.html",
+      "image": "https://www.enyinnaya.xyz/images/ND5A2793new.jpg",
+      "keywords": "clean code, readability, maintainability, over-engineering, software engineering"
+    }
+    </script>
+
+    <title>Fancy Code Is Not Good Code: Why I'm Choosing Boring on Purpose | Victor Eke</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@400;500;600;700&family=Inter:wght@400;500;600&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <style>
+        :root {
+            --ink: #0a0a0a;
+            --paper: #fafaf9;
+            --muted: #6b6b68;
+            --hair: #e2e1de;
+            --hair-strong: #0a0a0a;
+        }
+
+        * { font-family: 'Inter', system-ui, -apple-system, sans-serif; }
+        .font-display { font-family: 'Space Grotesk', system-ui, sans-serif; }
+        .font-mono { font-family: 'JetBrains Mono', ui-monospace, monospace; }
+
+        body {
+            background: var(--paper);
+            color: var(--ink);
+        }
+
+        .nav-link {
+            position: relative;
+            transition: color 0.2s ease;
+        }
+        .nav-link::after {
+            content: '';
+            position: absolute;
+            bottom: -3px;
+            left: 0;
+            width: 0;
+            height: 1px;
+            background: var(--ink);
+            transition: width 0.25s ease;
+        }
+        .nav-link:hover::after { width: 100%; }
+
+        .hairline { border-color: var(--hair); }
+
+        .cta-ghost {
+            display: inline-flex;
+            align-items: center;
+            gap: 0.6rem;
+            padding: 0.85rem 1.75rem;
+            border: 1px solid var(--ink);
+            color: var(--ink);
+            border-radius: 2px;
+            text-decoration: none;
+            font-weight: 500;
+            font-size: 0.95rem;
+            transition: transform 0.2s ease, background 0.2s ease, color 0.2s ease;
+        }
+        .cta-ghost:hover { transform: translateY(-2px); background: var(--ink); color: var(--paper); }
+
+        .eyebrow {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.8rem;
+            letter-spacing: 0.02em;
+            color: var(--muted);
+        }
+        .eyebrow::before { content: '// '; color: #b8b7b3; }
+
+        .article-tag {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.7rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: var(--muted);
+            border: 1px solid var(--hair);
+            border-radius: 2px;
+            padding: 0.2rem 0.55rem;
+        }
+
+        .prose-article h2 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 700;
+            font-size: 1.85rem;
+            letter-spacing: -0.01em;
+            margin-top: 3rem;
+            margin-bottom: 1.25rem;
+        }
+        .prose-article h3 {
+            font-family: 'Space Grotesk', sans-serif;
+            font-weight: 600;
+            font-size: 1.3rem;
+            margin-top: 2rem;
+            margin-bottom: 0.9rem;
+        }
+        .prose-article p {
+            font-size: 1.1rem;
+            line-height: 1.8;
+            color: #3a3a38;
+            margin-bottom: 1.25rem;
+        }
+        .prose-article ul, .prose-article ol {
+            margin: 1rem 0 1.5rem 1.25rem;
+            color: #3a3a38;
+            font-size: 1.1rem;
+            line-height: 1.8;
+        }
+        .prose-article ul { list-style: disc; }
+        .prose-article ol { list-style: decimal; }
+        .prose-article li { margin-bottom: 0.4rem; }
+        .prose-article strong { color: var(--ink); }
+        .prose-article code.inline {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.9em;
+            background: #efefec;
+            border: 1px solid var(--hair);
+            border-radius: 3px;
+            padding: 0.1rem 0.4rem;
+        }
+
+        /* Code block — signature styling to match the manifest aesthetic */
+        .code-block {
+            border: 1px solid var(--hair-strong);
+            border-radius: 2px;
+            background: #0f0f0e;
+            overflow: hidden;
+            margin: 1.75rem 0;
+        }
+        .code-block-head {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 0.6rem 1.1rem;
+            background: #181816;
+            border-bottom: 1px solid #2a2a27;
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.72rem;
+            letter-spacing: 0.04em;
+            text-transform: uppercase;
+            color: #9a9a96;
+        }
+        .code-block pre {
+            margin: 0;
+            padding: 1.25rem 1.5rem;
+            overflow-x: auto;
+        }
+        .code-block code {
+            font-family: 'JetBrains Mono', monospace;
+            font-size: 0.85rem;
+            line-height: 1.7;
+            color: #e8e8e4;
+            white-space: pre;
+        }
+        .tok-kw { color: #ff7ab2; }
+        .tok-str { color: #a8e6a1; }
+        .tok-com { color: #6b6b68; }
+        .tok-fn { color: #82c3ff; }
+        .tok-num { color: #f5c97a; }
+
+        blockquote {
+            border-left: 3px solid var(--ink);
+            padding: 0.25rem 0 0.25rem 1.5rem;
+            margin: 1.75rem 0;
+            font-style: italic;
+            color: #3a3a38;
+        }
+
+        ::selection { background: var(--ink); color: var(--paper); }
+        a:focus-visible, button:focus-visible {
+            outline: 2px solid var(--ink);
+            outline-offset: 3px;
+        }
+    </style>
+</head>
+<body class="antialiased">
+    <!-- Navigation -->
+    <nav class="fixed top-0 left-0 right-0 z-50 backdrop-blur-md bg-[#fafaf9]/85 border-b hairline">
+        <div class="max-w-5xl mx-auto px-6 py-4 flex justify-between items-center">
+            <a href="index.html" class="font-display text-lg font-700 tracking-tight">
+                Victor Eke
+            </a>
+            <div class="hidden md:flex gap-8">
+                <a href="index.html#about" class="nav-link text-sm font-medium">About</a>
+                <a href="index.html#stack" class="nav-link text-sm font-medium">Stack</a>
+                <a href="blog.html" class="nav-link text-sm font-medium">Blog</a>
+                <a href="index.html#contact" class="nav-link text-sm font-medium">Contact</a>
+            </div>
+        </div>
+    </nav>
+
+    <main>
+        <!-- Article header -->
+        <header class="pt-40 pb-12 px-6">
+            <div class="max-w-3xl mx-auto">
+                <a href="blog.html" class="font-mono text-sm text-[#6b6b68] inline-flex items-center gap-2 mb-8 hover:text-[#0a0a0a] transition-colors">
+                    <i class="fas fa-arrow-left text-xs"></i> Back to all posts
+                </a>
+                <div class="flex flex-wrap items-center gap-3 mb-6">
+                    <span class="article-tag">Clean Code</span>
+                    <span class="article-tag">Opinion</span>
+                    <span class="article-tag">Engineering</span>
+                    <time datetime="2026-10-23" class="font-mono text-xs text-[#6b6b68]">Oct 23, 2026</time>
+                </div>
+                <h1 class="font-display text-4xl md:text-5xl font-700 mb-6 leading-[1.1] tracking-tight">
+                    Fancy Code Is Not Good Code: Why I'm Choosing Boring on Purpose
+                </h1>
+                <p class="text-lg text-[#3a3a38] leading-relaxed max-w-xl">
+                    We love to write code that makes us look smart. The person reading it later doesn't care how
+                    smart you are, they just need to understand it, and a lot of the time that person is you.
+                </p>
+            </div>
+        </header>
+
+        <div class="max-w-5xl mx-auto px-6"><div class="border-t hairline"></div></div>
+
+        <!-- Article body -->
+        <article class="py-16 px-6">
+            <div class="max-w-3xl mx-auto prose-article">
+
+                <p>
+                    Let me start with a confession: I have written code that I knew was harder to read, purely
+                    because it felt cleverer. Not because it was faster, or safer, or more correct. Just because
+                    it made me feel like a better engineer in that moment.
+                </p>
+                <p>
+                    I'm fairly sure I'm not the only one. Most of us have done it, and we do it more often than
+                    we'd like to admit. This post is about that habit: where it comes from, what it costs, and
+                    the one question I now ask myself before I commit something "smart."
+                </p>
+
+                <h2 id="the-habit">The Urge to Look Smart</h2>
+                <p>
+                    There's a quiet pressure in this field to prove you know things. You pick up a new language
+                    feature, a new pattern, a new one-liner, and the first instinct is to use it somewhere.
+                    Anywhere. A dense line of code feels like evidence of skill. A plain, boring one feels like
+                    you didn't try hard enough.
+                </p>
+                <p>
+                    But that's backwards. Anyone can write code that's hard to understand. The real skill is
+                    writing something complicated and making it look obvious. When I read code that's easy to
+                    follow, my first thought isn't "this person is basic." It's "this person respected my time."
+                </p>
+
+                <h2 id="the-ternary">My Favourite Offender: The Unnecessary Ternary</h2>
+                <p>
+                    The ternary operator is where I catch myself the most. Don't get me wrong, ternaries are
+                    great. When you're picking between two <em>values</em>, they're often the best tool for the
+                    job:
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-head"><span>cart.js</span><span>JavaScript</span></div>
+                    <pre><code><span class="tok-com">// Choosing a value: the ternary earns its place here.</span>
+<span class="tok-kw">const</span> label = count === <span class="tok-num">1</span> ? <span class="tok-str">'item'</span> : <span class="tok-str">'items'</span>;</code></pre>
+                </div>
+
+                <p>
+                    That reads naturally. One decision, one result, one line. No one has to think twice.
+                </p>
+                <p>
+                    The trouble starts when I reach for the same tool for something it wasn't built for. Instead
+                    of picking a value, I'm running actions, and I cram them into a ternary anyway, because it's
+                    shorter and it feels slicker:
+                </p>
+
+             <div class="code-block">
+                    <div class="code-block-head"><span>auth.js</span><span>JavaScript</span></div>
+                    <pre><code><span class="tok-com">// Technically valid. Slightly annoying to read.</span>
+isAdmin ? <span class="tok-fn">console.log</span>(<span class="tok-str">"This is already an Admin account"</span>) : <span class="tok-kw">await</span> db.user.<span class="tok-fn">update</span>({ userId: user.id, role: <span class="tok-str">'admin'</span> });</code></pre>
+                </div>
+
+                <p>
+                    And here's the same thing written the boring way:
+                </p>
+
+                <div class="code-block">
+                    <div class="code-block-head"><span>auth.js</span><span>JavaScript</span></div>
+                    <pre><code><span class="tok-kw">if</span> (isAdmin) {
+    <span class="tok-fn">console.log</span>(<span class="tok-str">"This is already an Admin account"</span>);
+} <span class="tok-kw">else</span> {
+    <span class="tok-kw">await</span> db.user.<span class="tok-fn">update</span>({
+        userId: user.id,
+        role: <span class="tok-str">'admin'</span>,
+    });
+}</code></pre>
+                </div>
+
+                <p>
+                    It's longer. It's also instantly clear that this code <strong>does</strong> something rather
+                    than <strong>produces</strong> something. A ternary tells the reader "I'm computing a value
+                    here." When there's no value being used, that signal is misleading, and the reader has to
+                    pause and work out why it's written that way. I knew the <code class="inline">if/else</code>
+                    was easier to read. I still wrote the ternary. That's the whole problem.
+                </p>
+
+                <h2 id="llm-review">The Moment It Got Called Out</h2>
+                <p>
+                    What made this click for me was an ordinary code review. I'd been going back and forth with
+                    an LLM about some code I'd written, and one of its notes stopped me. It said:
+                </p>
+
+                <blockquote>
+                    I swapped the ternary for an <code class="inline">if/else</code>, since using a ternary just
+                    for side effects is harder to read.
+                </blockquote>
+
+                <p>
+                    And it was right. I had used a ternary purely to fire off side effects, with no value
+                    assigned and nothing returned. No good reason for it, apart from the fact that it looked
+                    compact. It was one of those small, slightly embarrassing moments where someone (or
+                    something) points at a thing you already knew was a bit silly.
+                </p>
+                <p>
+                    What stuck with me wasn't that the tool caught it. It was how plainly it explained why: not
+                    "ternaries are bad," but "this particular use makes the code harder to read." That's the
+                    right way to think about it. The question was never whether a feature is allowed. It's
+                    whether it helps the next person.
+                </p>
+
+                <h2 id="overkill">The Same Habit, at Project Scale</h2>
+                <p>
+                    This doesn't stop at single lines. It scales up into how we start projects. You've seen it,
+                    and so have I: a simple page that could be built with plain HTML and a little CSS, and
+                    before the first line of real work, someone has already run
+                    <code class="inline">npm install react</code>, picked a router, added a state library, and
+                    set up a build pipeline.
+                </p>
+                <p>
+                    Frameworks are not the villain here. React, and tools like it, solve real problems at real
+                    scale. But a handful of static pages doesn't have those problems. What it does get is a
+                    dependency tree, a build step that can break, upgrades to keep up with, and a longer
+                    onboarding story for the next developer. You've taken on all of that cost to solve a
+                    problem you never had.
+                </p>
+                <p>
+                    A few questions I try to ask before adding anything to a project:
+                </p>
+                <ul>
+                    <li>What problem does this solve that I actually have today, not one I might have someday?</li>
+                    <li>Could plain HTML, plain CSS, or a few lines of plain JavaScript do the same job?</li>
+                    <li>What does this add that someone else will have to learn, maintain, and update?</li>
+                </ul>
+                <p>
+                    If the honest answer to the first question is "nothing yet," I try to wait until it isn't.
+                </p>
+
+                <h2 id="three-am">Write for the 3am Version of Someone</h2>
+                <p>
+                    Here's the mental model that changed how I write code. Picture someone opening this file at
+                    3am. Something is broken in production, they're tired, they're stressed, and they don't have
+                    the context you had when you wrote it. They don't want to admire your cleverness. They want
+                    to find the problem and go back to sleep.
+                </p>
+                <p>
+                    And a lot of the time, that person is going to be <strong>you</strong>. Future you, months
+                    from now, has forgotten the clever trick and the reasoning behind it. All that's left is the
+                    code and a vague feeling that past you thought this was a good idea. I've been on the
+                    receiving end of that, and I was not grateful to the person who wrote it.
+                </p>
+
+                <blockquote>
+                    Code is read far more often than it's written. Optimise for the reader, because the reader
+                    is usually future you.
+                </blockquote>
+
+                <h2 id="not-a-rule">This Isn't an Anti-Cleverness Rule</h2>
+                <p>
+                    I want to be careful here, because the lesson isn't "never use advanced features." That
+                    would just be a different kind of dogma. Ternaries are the right call when you're choosing a
+                    value. Frameworks are the right call when the project genuinely needs them. A clever
+                    solution is sometimes the only way to solve a hard problem well.
+                </p>
+                <p>
+                    The point is to be honest about <em>why</em> you're reaching for something. There's a simple
+                    test I use now:
+                </p>
+                <ul>
+                    <li><strong>Am I doing this because it's clearer, or because it feels impressive?</strong></li>
+                    <li>Would a teammate who didn't write this understand it in one read?</li>
+                    <li>If I came back after six months, would I thank myself or sigh?</li>
+                </ul>
+                <p>
+                    If the answers point toward clarity, go ahead and use the fancy thing. If they point toward
+                    ego, write the boring version.
+                </p>
+
+                <h3>What I'm doing differently</h3>
+                <ul>
+                    <li>Using <code class="inline">if/else</code> when I'm running actions, and saving ternaries for choosing values.</li>
+                    <li>Starting small projects with the simplest tools that work, and adding to them only when something starts to hurt.</li>
+                    <li>Reading my own code back the next day, as if someone else wrote it.</li>
+                </ul>
+
+                <p>
+                    At the end of the day, the best code isn't the cleverest code. It's the code that does its
+                    job, stays easy to change, and doesn't make a tired person curse your name at 3am. I'd
+                    rather be that engineer than the one who looked smart for an afternoon.
+                </p>
+
+                <p>
+                    If you're building something and want a second pair of eyes on how to keep it simple and
+                    maintainable, <a href="index.html#contact" class="underline hover:no-underline">get in touch</a>.
+                </p>
+            </div>
+        </article>
+
+        <div class="max-w-5xl mx-auto px-6"><div class="border-t hairline"></div></div>
+
+        <!-- Back to blog CTA -->
+        <section class="py-16 px-6">
+            <div class="max-w-3xl mx-auto flex flex-col sm:flex-row gap-4">
+                <a href="blog.html" class="cta-ghost">
+                    <i class="fas fa-arrow-left text-sm"></i> More engineering notes
+                </a>
+                <a href="index.html#contact" class="cta-ghost">
+                    <i class="fas fa-envelope text-sm"></i> Contact me
+                </a>
+            </div>
+        </section>
+    </main>
+
+    <!-- Footer -->
+    <footer class="py-10 px-6 border-t hairline">
+        <div class="max-w-5xl mx-auto flex flex-col sm:flex-row justify-between items-start sm:items-center gap-2">
+            <p class="text-sm text-[#6b6b68]">© 2026 Victor Eke</p>
+            <p class="font-mono text-xs text-[#6b6b68]">node · typescript · php · laravel · spring boot · postgresql</p>
+        </div>
+    </footer>
+</body>
+</html>
